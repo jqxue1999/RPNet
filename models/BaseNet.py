@@ -9,9 +9,9 @@ class eBaseNet(nn.Module):
 
         self.features = nn.Sequential(
             nn.Conv2d(3, 16, 3, 1, 1), Square(),
-            nn.MaxPool2d(2),
+            nn.AvgPool2d(2),
             nn.Conv2d(16, 32, 3), Square(),
-            nn.MaxPool2d(2),
+            nn.AvgPool2d(2),
             nn.Conv2d(32, 64, 3), Square()
         )
         self.classifier = nn.Sequential(
@@ -47,6 +47,7 @@ class BaseNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
+
 
 if __name__ == '__main__':
     X = torch.ones((64, 3, 32, 32))

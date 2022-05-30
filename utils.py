@@ -83,30 +83,30 @@ def apply_normalization(imgs, dataset):
 # get most likely predictions and probabilities for a set of inputs
 def get_preds(model, inputs, dataset_name, correct_class=None, batch_size=25, return_cpu=True):
     num_batches = int(math.ceil(inputs.size(0) / float(batch_size)))
-    softmax = torch.nn.Softmax()
+    softmax = torch.nn.Softmax(dim=1)
     all_preds, all_probs = None, None
     transform = trans.Normalize(IMAGENET_MEAN, IMAGENET_STD)
-    for i in range(num_batches):
-        upper = min((i + 1) * batch_size, inputs.size(0))
-        input = apply_normalization(inputs[(i * batch_size):upper], dataset_name)
-        input_var = torch.autograd.Variable(input.cuda(), volatile=True)
-        output = softmax.forward(model.forward(input_var))
-        if correct_class is None:
-            prob, pred = output.max(1)
-        else:
-            prob, pred = output[:, correct_class], torch.autograd.Variable(torch.ones(output.size()) * correct_class)
-        if return_cpu:
-            prob = prob.data.cpu()
-            pred = pred.data.cpu()
-        else:
-            prob = prob.data
-            pred = pred.data
-        if i == 0:
-            all_probs = prob
-            all_preds = pred
-        else:
-            all_probs = torch.cat((all_probs, prob), 0)
-            all_preds = torch.cat((all_preds, pred), 0)
+    with torch.no_grad():
+        for i in range(num_batches):
+            upper = min((i + 1) * batch_size, inputs.size(0))
+            input = apply_normalization(inputs[(i * batch_size):upper], dataset_name).cuda()
+            output = softmax.forward(model.forward(input))
+            if correct_class is None:
+                prob, pred = output.max(1)
+            else:
+                prob, pred = output[:, correct_class], torch.autograd.Variable(torch.ones(output.size()) * correct_class)
+            if return_cpu:
+                prob = prob.data.cpu()
+                pred = pred.data.cpu()
+            else:
+                prob = prob.data
+                pred = pred.data
+            if i == 0:
+                all_probs = prob
+                all_preds = pred
+            else:
+                all_probs = torch.cat((all_probs, prob), 0)
+                all_preds = torch.cat((all_preds, pred), 0)
     return all_preds, all_probs
 
 

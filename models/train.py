@@ -13,7 +13,7 @@ parser.add_argument('--model', default="BaseNet", type=str, help='mdoel name')
 parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 parser.add_argument('--batch_size', default=64, type=int, help='batch size')
 parser.add_argument('--epochs', default=100, type=int, help='epochs')
-parser.add_argument('--save', default='./checkpoint/', type=str, help='save location')
+parser.add_argument('--save_dir', required=True, type=str, help='save location')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -54,6 +54,12 @@ optimizer = optim.Adam(model.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 
+def setup_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+
+
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     for batch, (X, y) in enumerate(dataloader):
@@ -75,6 +81,7 @@ def test_loop(dataloader, model, loss_fn, epoch):
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
+    model.eval()
 
     with torch.no_grad():
         for X, y in dataloader:
@@ -87,13 +94,12 @@ def test_loop(dataloader, model, loss_fn, epoch):
     correct /= size
 
     if correct > best_acc:
-        print('Saving..')
         state = {
             'net': model.state_dict(),
             'acc': correct,
             'epoch': epoch,
         }
-        torch.save(state, args.save + args.model + '.pth')
+        torch.save(state, args.save_dir)
         best_acc = correct
     print(
         f"Test Error: \n Best Accuracy: {(100 * best_acc):>0.1f}%, Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
