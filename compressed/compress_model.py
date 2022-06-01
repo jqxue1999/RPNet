@@ -11,9 +11,10 @@ parser.add_argument('--model_name', required=True, type=str, help='mdoel name')
 parser.add_argument('--model_dir', required=True, type=str, help='mdoel dir')
 parser.add_argument('--dataset_dir', required=True, type=str, help='dataset_dir')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
-parser.add_argument('--act_bits', default=8, type=int, help='act bits')
-parser.add_argument('--weight_bits', default=6, type=int, help='weight bits')
+parser.add_argument('--act_bits', default=16, type=int, help='act bits')
+parser.add_argument('--weight_bits', default=16, type=int, help='weight bits')
 parser.add_argument('--save_dir', required=True, type=str, help='save dir')
+parser.add_argument('--input_scale', default=1, type=int, help='input scale')
 args = parser.parse_args()
 
 # load model
@@ -22,8 +23,8 @@ model_raw = getattr(models, args.model_name)().cuda()
 model_raw = torch.nn.DataParallel(model_raw)
 checkpoint = torch.load(args.model_dir)
 model_raw.load_state_dict(checkpoint['net'])
-# load dataset
 
+# load dataset
 transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
@@ -42,9 +43,8 @@ train_dataloader = torch.utils.data.DataLoader(training_data, batch_size=args.ba
 test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
 utils.test(model_raw, test_dataloader)
-model_new = compress.CompressedModel(model_raw, input_scale=255, act_bits=args.act_bits, weight_bits=args.weight_bits)
+model_new = compress.CompressedModel(model_raw, input_scale=args.input_scale, act_bits=args.act_bits, weight_bits=args.weight_bits)
 utils.test(model_new, test_dataloader)
-# utils.eval_model(model_new, test_dataloader)
 model_new.quantize_params()
 utils.test(model_new, test_dataloader)
 

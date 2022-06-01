@@ -5,8 +5,7 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 import argparse
-from models.MobileNetV2 import MobileNetV2
-from models.BaseNet import BaseNet, eBaseNet
+import models
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
 parser.add_argument('--model', default="BaseNet", type=str, help='mdoel name')
@@ -37,14 +36,7 @@ test_data = torchvision.datasets.CIFAR10(root='./data', train=False, download=Tr
 train_dataloader = torch.utils.data.DataLoader(training_data, batch_size=args.batch_size, shuffle=True, num_workers=0)
 test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
-if args.model == "BaseNet":
-    model = BaseNet()
-if args.model == "MobileNetV2":
-    model = MobileNetV2()
-if args.model == "eBaseNet":
-    model = eBaseNet()
-
-model = model.to(device)
+model = getattr(models, args.model)().to(device)
 if device == 'cuda':
     model = torch.nn.DataParallel(model)
     cudnn.benchmark = True
