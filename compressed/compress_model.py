@@ -25,21 +25,11 @@ checkpoint = torch.load(args.model_dir)
 model_raw.load_state_dict(checkpoint['net'])
 
 # load dataset
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-])
-
 transform_test = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 ])
-
-training_data = torchvision.datasets.CIFAR10(root=args.dataset_dir, train=True, download=True, transform=transform_train)
 test_data = torchvision.datasets.CIFAR10(root=args.dataset_dir, train=False, download=True, transform=transform_test)
-train_dataloader = torch.utils.data.DataLoader(training_data, batch_size=args.batch_size, shuffle=True, num_workers=0)
 test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=0)
 
 utils.test(model_raw, test_dataloader)
@@ -49,5 +39,5 @@ model_new.quantize_params()
 utils.test(model_new, test_dataloader)
 
 print(model_new)
-state = {'net': model_new.state_dict()}
-torch.save(state, args.save_dir)
+model_new = torch.nn.DataParallel(model_new)
+torch.save(model_new, args.save_dir)

@@ -14,6 +14,7 @@ parser.add_argument('--data_root', type=str, default='./data', help='root direct
 parser.add_argument('--result_dir', type=str, default='save_cifar', help='directory for saving results')
 parser.add_argument('--sampled_image_dir', type=str, default='save_cifar', help='directory to cache sampled images')
 parser.add_argument('--model', type=str, required=True, help='type of base model to use')
+parser.add_argument('--compress', action='store_true', help='compress model or normal model')
 parser.add_argument('--model_ckpt', type=str, required=True, help='model checkpoint location')
 parser.add_argument('--num_runs', type=int, default=1000, help='number of image samples')
 parser.add_argument('--batch_size', type=int, default=50, help='batch size for parallel runs')
@@ -35,10 +36,14 @@ if not os.path.exists(args.sampled_image_dir):
     os.mkdir(args.sampled_image_dir)
 
 # load model and dataset
-model = getattr(models, args.model)().cuda()
-model = torch.nn.DataParallel(model)
-checkpoint = torch.load(args.model_ckpt)
-model.load_state_dict(checkpoint['net'])
+if args.compress:
+    model = torch.load(args.model_ckpt)
+else:
+    model = getattr(models, args.model)().cuda()
+    model = torch.nn.DataParallel(model)
+    checkpoint = torch.load(args.model_ckpt)
+    model.load_state_dict(checkpoint['net'])
+
 # model.module.add_module("add_softmax", torch.nn.Softmax(dim=1))
 model.eval()
 image_size = 32
