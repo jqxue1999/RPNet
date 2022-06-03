@@ -6,6 +6,7 @@ import torchvision
 import torchvision.transforms as transforms
 import argparse
 import models
+from utils import setup_seed
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
 parser.add_argument('--model', default="BaseNet", type=str, help='mdoel name')
@@ -15,6 +16,7 @@ parser.add_argument('--epochs', default=100, type=int, help='epochs')
 parser.add_argument('--save_dir', required=True, type=str, help='save location')
 args = parser.parse_args()
 
+setup_seed(47)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 best_acc = 0
 start_epoch = 0
@@ -44,12 +46,6 @@ if device == 'cuda':
 loss_fn = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=args.lr)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
-
-
-def setup_seed(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
 
 
 def train_loop(dataloader, model, loss_fn, optimizer):

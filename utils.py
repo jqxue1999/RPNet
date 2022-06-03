@@ -3,6 +3,9 @@ import numpy as np
 import torchvision.transforms as trans
 import math
 from scipy.fftpack import dct, idct
+import random
+import matplotlib.pyplot as plt
+import os
 
 # mean and std for different datasets
 IMAGENET_SIZE = 224
@@ -230,3 +233,15 @@ def block_idct(x, block_size=8, masked=False, ratio=0.5, linf_bound=0.0):
         return z.clamp(-linf_bound, linf_bound)
     else:
         return z
+
+
+def setup_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True

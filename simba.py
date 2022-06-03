@@ -56,7 +56,9 @@ class SimBA:
     # runs simba on a batch of images <images_batch> with true labels (for untargeted attack) or target labels
     # (for targeted attack) <labels_batch>
     def simba_batch(self, images_batch, labels_batch, max_iters, freq_dims, stride, epsilon, linf_bound=0.0,
-                    order='rand', targeted=False, pixel_attack=False, log_every=1):
+                    order='rand', targeted=False, pixel_attack=False, log_every=1, seed=47):
+        res = 0
+        utils.setup_seed(seed)
         batch_size = images_batch.size(0)
         image_size = images_batch.size(2)
         assert self.image_size == image_size
@@ -151,6 +153,7 @@ class SimBA:
             queries[:, k] = queries_k
             prev_probs = probs[:, k]
             if (k + 1) % log_every == 0 or k == max_iters - 1:
+                # res = remaining.float().mean()
                 print('Iteration %d: queries = %.4f, prob = %.4f, remaining = %.4f' % (
                         k + 1, queries.sum(1).mean(), probs[:, k].mean(), remaining.float().mean()))
         expanded = (images_batch + trans(self.expand_vector(x, expand_dims))).clamp(0, 1)
@@ -160,4 +163,5 @@ class SimBA:
         else:
             remaining = preds.eq(labels_batch)
         succs[:, max_iters-1] = ~remaining
-        return expanded, probs, succs, queries, l2_norms, linf_norms
+        # print("remaining = {}".format(res))
+        return expanded, probs, succs, queries, l2_norms, linf_norms, res

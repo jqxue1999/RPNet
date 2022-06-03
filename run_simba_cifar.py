@@ -28,6 +28,7 @@ parser.add_argument('--stride', type=int, default=7, help='stride for block orde
 parser.add_argument('--targeted', action='store_true', help='perform targeted attack')
 parser.add_argument('--pixel_attack', action='store_true', help='attack in pixel space')
 parser.add_argument('--save_suffix', type=str, default='', help='suffix appended to save file')
+parser.add_argument('--seed', type=int, default=47, help='type of base model to use')
 args = parser.parse_args()
 
 if not os.path.exists(args.result_dir):
@@ -43,8 +44,7 @@ else:
     model = torch.nn.DataParallel(model)
     checkpoint = torch.load(args.model_ckpt)
     model.load_state_dict(checkpoint['net'])
-
-# model.module.add_module("add_softmax", torch.nn.Softmax(dim=1))
+utils.setup_seed(args.seed)
 model.eval()
 image_size = 32
 testset = dset.CIFAR10(root=args.data_root, train=False, download=True, transform=utils.CIFAR_TRANSFORM)
@@ -87,9 +87,9 @@ for i in range(N):
         while labels_targeted.eq(labels_batch).sum() > 0:
             labels_targeted = torch.floor(10 * torch.rand(labels_batch.size())).long()
         labels_batch = labels_targeted
-    adv, probs, succs, queries, l2_norms, linf_norms = attacker.simba_batch(
+    adv, probs, succs, queries, l2_norms, linf_norms, info = attacker.simba_batch(
         images_batch, labels_batch, max_iters, args.freq_dims, args.stride, args.epsilon, linf_bound=args.linf_bound,
-        order=args.order, targeted=args.targeted, pixel_attack=args.pixel_attack, log_every=args.log_every)
+        order=args.order, targeted=args.targeted, pixel_attack=args.pixel_attack, log_every=args.log_every, seed=args.seed)
     if i == 0:
         all_adv = adv
         all_probs = probs
@@ -114,3 +114,24 @@ for i in range(N):
         args.result_dir, prefix, args.model, args.num_runs, args.num_iters, args.freq_dims, args.epsilon, args.order, args.save_suffix)
     torch.save({'adv': all_adv, 'probs': all_probs, 'succs': all_succs, 'queries': all_queries,
                 'l2_norms': all_l2_norms, 'linf_norms': all_linf_norms}, savefile)
+
+# import matplotlib.pyplot as plt
+# import numpy as np
+# upper = min(args.batch_size, args.num_runs)
+# images_batch = images[0:upper]
+# labels_batch = labels[0:upper]
+# X = list(np.arange(0.2, 10, 0.1))
+# y = []
+# for i in X:
+#     print("第{}轮---------------------------------------".format(i))
+#     if args.targeted:
+#         labels_targeted = labels_batch.clone()
+#         while labels_targeted.eq(labels_batch).sum() > 0:
+#             labels_targeted = torch.floor(10 * torch.rand(labels_batch.size())).long()
+#         labels_batch = labels_targeted
+#     info = attacker.simba_batch(images_batch, labels_batch, max_iters, args.freq_dims, args.stride, i,
+#                                 linf_bound=args.linf_bound, order=args.order, targeted=args.targeted,
+#                                 pixel_attack=args.pixel_attack, log_every=args.log_every, seed=args.seed)[-1]
+#     y.append(info)
+#
+# plt.plot(X, y)
