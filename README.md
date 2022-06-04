@@ -48,7 +48,7 @@ python attack/run_simba_cifar.py --targeted --compress --model eBaseNet --model_
 ```
 **I find that after compression, the attack efficiency against BaseModel or eBaseModel will be significantly reduced. Only raising epsilon to 0.7 has a good effect. You can review this on the image below.**
 
-![effect-epsilon](https://github.com/quliikay/Adversarial-Attack/blob/main/scores/images.png?raw=true)
+![effect-epsilon](https://github.com/quliikay/Adversarial-Attack/blob/main/scores/CIFAR10/images.png?raw=true)
 
 The experiments were divided into two groups: the first group was targeted attack and the other group was untargeted attack.
 
@@ -58,5 +58,38 @@ In the targeted attack group, **probability** represents the probability that th
 
 From these experiments, we can know the compression operation has some **defense effect** on attack? No matter in BaseNet or eBaseNet.
 
+***[Fix]***: In my last experiment, I found that when using the Square activation function, the attack only works when epsilon>=5. But after my later inspection, it was due to a **bug** in the code: the parameters of normalize were not unified in training and attack. After fixing it, it can be found that using Square activation function does not significantly improve the model's ability to resist attacks. The attack still works when epsilon is less than 1, as same as using the Relu.
 
+## MNIST
 
+### Models
+
+- BaseModel: a simple CNN used on MNIST    ACC: 98.32%
+- eBaseModel: replace all relu() with square()   ACC: 98.21%
+
+To train model and save:
+
+```bash
+python models/train.py --dataset MNIST --epochs 20 --lr 0.001 --model BaseNet --save_dir ./checkpoint/MNIST/BaseNet.pth
+```
+
+### Compressed
+
+Same as CIFAR10, we can compress both model with 8bits:
+
+```bash
+python ./compressed/compress_model.py --dataset MNIST --model BaseNet --model_dir ./checkpoint/MNIST/BaseNet.pth --dataset_dir ./data --save_dir ./checkpoint/MNIST/BaseNet-8.pth --act_bits 8 --weight_bits 8
+```
+
+- BaseModel-8:   ACC: 97.59%
+- eBaseModel-8:  ACC: 98.11%
+
+### SimBA
+
+Same as the CIFAR10, run the script **run_simba_mnist.py**
+
+```bash
+python attack/run_simba_mnist.py --targeted --model BaseNet --model_ckpt ./checkpoint/CIFAR10/BaseNet.pth --epsilon 0.2 
+```
+
+![effect-epsilon](https://github.com/quliikay/Adversarial-Attack/blob/main/scores/MNIST/images.png?raw=true)
