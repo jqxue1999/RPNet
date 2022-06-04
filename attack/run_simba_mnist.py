@@ -119,14 +119,14 @@ for i in range(N):
     torch.save({'adv': all_adv, 'probs': all_probs, 'succs': all_succs, 'queries': all_queries,
                 'l2_norms': all_l2_norms, 'linf_norms': all_linf_norms}, savefile)
 
-# import matplotlib.pyplot as plt
 # import numpy as np
 # upper = min(args.batch_size, args.num_runs)
 # images_batch = images[0:upper]
 # labels_batch = labels[0:upper]
-# X = list(np.arange(0.2, 10, 0.1))
-# y = []
-# for i in X:
+# epoch = list(np.arange(0.2, 10, 0.1))
+# remaining = []
+# prob = []
+# for i in epoch:
 #     print("第{}轮---------------------------------------".format(i))
 #     if args.targeted:
 #         labels_targeted = labels_batch.clone()
@@ -136,6 +136,7 @@ for i in range(N):
 #     info = attacker.simba_batch(images_batch, labels_batch, max_iters, args.freq_dims, args.stride, i,
 #                                 linf_bound=args.linf_bound, order=args.order, targeted=args.targeted,
 #                                 pixel_attack=args.pixel_attack, log_every=args.log_every, seed=args.seed)[-1]
-#     y.append(info)
-#
-# plt.plot(X, y)
+#     remaining.append(info.get('remaining'))
+#     prob.append(info.get('prob'))
+# print("End-----------------------------------------")
+# print("eee")

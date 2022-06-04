@@ -24,6 +24,7 @@ def get_dataset(dataset_name, dataset_dir, batch_size=64):
 
     elif dataset_name == "MNIST":
         transform_train = transforms.Compose([
+            transforms.RandomCrop(28, padding=4),
             transforms.ToTensor(),
             transforms.Normalize((0.1307, ), (0.3081,))
         ])
