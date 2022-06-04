@@ -29,8 +29,8 @@ CIFAR_TRANSFORM = trans.Compose([
     trans.ToTensor()])
 
 MNIST_SIZE = 28
-MNIST_MEAN = [0.5]
-MNIST_STD = [1.0]
+MNIST_MEAN = [0.1307]
+MNIST_STD = [0.3081]
 MNIST_TRANSFORM = trans.Compose([
     trans.ToTensor()])
 

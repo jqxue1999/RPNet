@@ -1,5 +1,5 @@
 from compressed import utils
-import models
+import models.CIFAR10
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -12,13 +12,13 @@ def get_acc_loss(model, model_dir, data_dir):
     Acc, Loss = [], []
     transform_test = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
     test_data = torchvision.datasets.CIFAR10(root=data_dir, train=False, download=True, transform=transform_test)
     test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=128, shuffle=False, num_workers=0)
 
     utils.ensure_dir(model_dir)
-    model_raw = getattr(models, model)().cuda()
+    model_raw = getattr(models.CIFAR10, model)().cuda()
     model_raw = torch.nn.DataParallel(model_raw)
     checkpoint = torch.load(model_dir)
     model_raw.load_state_dict(checkpoint['net'])
@@ -61,8 +61,8 @@ def plot_score(model, img_dir):
 
 
 if __name__ == '__main__':
-    BaseAcc, BaseLoss = get_acc_loss("BaseNet", "../checkpoint/BaseNet.pth", "../data")
-    eBaseAcc, eBaseLoss = get_acc_loss("eBaseNet", "../checkpoint/eBaseNet.pth", "../data")
+    BaseAcc, BaseLoss = get_acc_loss("BaseNet", "../checkpoint/CIFAR10/BaseNet.pth", "../data")
+    eBaseAcc, eBaseLoss = get_acc_loss("eBaseNet", "../checkpoint/CIFAR10/eBaseNet.pth", "../data")
     Base = {"Acc": BaseAcc, "Loss": BaseLoss, "name": "BaseNet"}
     eBase = {"Acc": eBaseAcc, "Loss": eBaseLoss, "name": "eBaseNet"}
     plot_score(Base, "./image/")

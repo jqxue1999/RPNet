@@ -1,2 +1,2 @@
-from .Square import Square
-from .BaseNet import BaseNet, eBaseNet
+from .CIFAR10 import *
+from .MNIST import *

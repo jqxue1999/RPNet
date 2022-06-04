@@ -1,6 +1,6 @@
+import torch
 from torch import nn
 from models.Square import Square
-import torch
 
 
 class eBaseNet(nn.Module):

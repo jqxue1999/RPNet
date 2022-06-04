@@ -1,18 +1,17 @@
 import torch
 import torchvision.datasets as dset
-import torchvision.transforms as transforms
 import utils
 import math
 import random
 import argparse
 import os
 import models
-from simba import SimBA
+from simba_mnist import SimBA
 
 parser = argparse.ArgumentParser(description='Runs SimBA on a set of images')
 parser.add_argument('--data_root', type=str, default='./data', help='root directory of imagenet data')
-parser.add_argument('--result_dir', type=str, default='save_cifar', help='directory for saving results')
-parser.add_argument('--sampled_image_dir', type=str, default='save_cifar', help='directory to cache sampled images')
+parser.add_argument('--result_dir', type=str, default='save_mnist', help='directory for saving results')
+parser.add_argument('--sampled_image_dir', type=str, default='save_mnist', help='directory to cache sampled images')
 parser.add_argument('--model', type=str, required=True, help='type of base model to use')
 parser.add_argument('--compress', action='store_true', help='compress model or normal model')
 parser.add_argument('--model_ckpt', type=str, required=True, help='model checkpoint location')
@@ -22,7 +21,7 @@ parser.add_argument('--num_iters', type=int, default=0, help='maximum number of 
 parser.add_argument('--log_every', type=int, default=10, help='log every n iterations')
 parser.add_argument('--epsilon', type=float, default=0.2, help='step size per iteration')
 parser.add_argument('--linf_bound', type=float, default=0.0, help='L_inf bound for frequency space attack')
-parser.add_argument('--freq_dims', type=int, default=32, help='dimensionality of 2D frequency space')
+parser.add_argument('--freq_dims', type=int, default=28, help='dimensionality of 2D frequency space')
 parser.add_argument('--order', type=str, default='rand', help='(random) order of coordinate selection')
 parser.add_argument('--stride', type=int, default=7, help='stride for block order')
 parser.add_argument('--targeted', action='store_true', help='perform targeted attack')
@@ -40,15 +39,16 @@ if not os.path.exists(args.sampled_image_dir):
 if args.compress:
     model = torch.load(args.model_ckpt)
 else:
-    model = getattr(models, args.model)().cuda()
+    model = getattr(getattr(models, "MNIST"), args.model)().cuda()
     model = torch.nn.DataParallel(model)
     checkpoint = torch.load(args.model_ckpt)
     model.load_state_dict(checkpoint['net'])
+
 utils.setup_seed(args.seed)
 model.eval()
-image_size = 32
-testset = dset.CIFAR10(root=args.data_root, train=False, download=True, transform=utils.CIFAR_TRANSFORM)
-attacker = SimBA(model, 'cifar', image_size)
+image_size = 28
+testset = dset.MNIST(root=args.data_root, train=False, download=True, transform=utils.MNIST_TRANSFORM)
+attacker = SimBA(model, 'mnist', image_size)
 
 # load sampled images or sample new ones
 # this is to ensure all attacks are run on the same set of correctly classified images
@@ -58,20 +58,20 @@ if os.path.isfile(batchfile):
     images = checkpoint['images']
     labels = checkpoint['labels']
 else:
-    images = torch.zeros(args.num_runs, 3, image_size, image_size)
+    images = torch.zeros(args.num_runs, 1, image_size, image_size)
     labels = torch.zeros(args.num_runs).long()
     preds = labels + 1
     while preds.ne(labels).sum() > 0:
         idx = torch.arange(0, images.size(0)).long()[preds.ne(labels)]
         for i in list(idx):
             images[i], labels[i] = testset[random.randint(0, len(testset) - 1)]
-        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=args.batch_size)
+        preds[idx], _ = utils.get_preds(model, images[idx], 'mnist', batch_size=args.batch_size)
     torch.save({'images': images, 'labels': labels}, batchfile)
 
 if args.order == 'rand':
-    n_dims = 3 * args.freq_dims * args.freq_dims
+    n_dims = 1 * args.freq_dims * args.freq_dims
 else:
-    n_dims = 3 * image_size * image_size
+    n_dims = 1 * image_size * image_size
 if args.num_iters > 0:
     max_iters = int(min(n_dims, args.num_iters))
 else:
@@ -89,7 +89,8 @@ for i in range(N):
         labels_batch = labels_targeted
     adv, probs, succs, queries, l2_norms, linf_norms, info = attacker.simba_batch(
         images_batch, labels_batch, max_iters, args.freq_dims, args.stride, args.epsilon, linf_bound=args.linf_bound,
-        order=args.order, targeted=args.targeted, pixel_attack=args.pixel_attack, log_every=args.log_every, seed=args.seed)
+        order=args.order, targeted=args.targeted, pixel_attack=args.pixel_attack, log_every=args.log_every,
+        seed=args.seed)
     if i == 0:
         all_adv = adv
         all_probs = probs
@@ -111,7 +112,8 @@ for i in range(N):
     if args.targeted:
         prefix += '_targeted'
     savefile = '%s/%s_%s_%d_%d_%d_%.4f_%s%s.pth' % (
-        args.result_dir, prefix, args.model, args.num_runs, args.num_iters, args.freq_dims, args.epsilon, args.order, args.save_suffix)
+        args.result_dir, prefix, args.model, args.num_runs, args.num_iters, args.freq_dims, args.epsilon, args.order,
+        args.save_suffix)
     torch.save({'adv': all_adv, 'probs': all_probs, 'succs': all_succs, 'queries': all_queries,
                 'l2_norms': all_l2_norms, 'linf_norms': all_linf_norms}, savefile)
 
