@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 import torch
 from torch import nn
@@ -7,7 +10,7 @@ import models
 from models.utils import setup_seed, train_loop, test_loop, get_dataset
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
-parser.add_argument('--dataset', default="CIFAR10", type=str, help='dataset name')
+parser.add_argument('--dataset', required=True, type=str, help='dataset name')
 parser.add_argument('--dataset_dir', default='./data', type=str, help='dataset dir')
 parser.add_argument('--model', default="BaseNet", type=str, help='mdoel name')
 parser.add_argument('--lr', default=0.01, type=float, help='learning rate')

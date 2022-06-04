@@ -1,10 +1,12 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torchvision.datasets as dset
 import utils
 import math
 import random
 import argparse
-import os
 import models
 from simba_mnist import SimBA
 

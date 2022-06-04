@@ -1,9 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 from compressed import utils
 import models
 import torch
-import torchvision
-import torchvision.transforms as transforms
 import torch.backends.cudnn as cudnn
 from compressed import compress
 from compressed.utils import get_dataset
@@ -12,7 +13,7 @@ parser = argparse.ArgumentParser(description='Model Compress')
 parser.add_argument('--model', required=True, type=str, help='mdoel name')
 parser.add_argument('--model_dir', required=True, type=str, help='mdoel dir')
 parser.add_argument('--dataset', required=True, type=str, help='dataset name')
-parser.add_argument('--dataset_dir', default='../data', type=str, help='dataset dir')
+parser.add_argument('--dataset_dir', default='./data', type=str, help='dataset dir')
 parser.add_argument('--batch_size', default=128, type=int, help='batch size')
 parser.add_argument('--act_bits', default=16, type=int, help='act bits')
 parser.add_argument('--weight_bits', default=16, type=int, help='weight bits')
