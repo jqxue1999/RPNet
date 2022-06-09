@@ -42,7 +42,6 @@ def test(model, dataloader):
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
     model = model.cuda()
-    model = torch.nn.DataParallel(model)
     model.eval()
     loss_fn = torch.nn.CrossEntropyLoss()
     with torch.no_grad():

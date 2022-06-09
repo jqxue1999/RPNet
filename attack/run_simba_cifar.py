@@ -22,6 +22,7 @@ parser.add_argument('--batch_size', type=int, default=50, help='batch size for p
 parser.add_argument('--num_iters', type=int, default=0, help='maximum number of iterations, 0 for unlimited')
 parser.add_argument('--log_every', type=int, default=10, help='log every n iterations')
 parser.add_argument('--epsilon', type=float, default=0.2, help='step size per iteration')
+parser.add_argument('--sigma', type=float, default=0.0, help='gaussian noise')
 parser.add_argument('--linf_bound', type=float, default=0.0, help='L_inf bound for frequency space attack')
 parser.add_argument('--freq_dims', type=int, default=32, help='dimensionality of 2D frequency space')
 parser.add_argument('--order', type=str, default='rand', help='(random) order of coordinate selection')
@@ -45,6 +46,8 @@ else:
     model = torch.nn.DataParallel(model)
     checkpoint = torch.load(args.model_ckpt)
     model.load_state_dict(checkpoint['net'])
+if args.sigma != 0:
+    model = models.GaussianNoiseNet(model, args.sigma)
 utils.setup_seed(args.seed)
 model.eval()
 image_size = 32
