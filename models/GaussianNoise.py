@@ -19,7 +19,6 @@ class GaussianNoiseNet(nn.Module):
         self.softmax = nn.Softmax(dim=1)
         self.GaussianNoise = GaussianNoise(sigma)
 
-
     def forward(self, x):
         x = self.base(x)
         x = self.softmax(x)
