@@ -35,6 +35,13 @@ MNIST_TRANSFORM = trans.Compose([
     trans.ToTensor()])
 
 
+# add gaussian noise
+def add_gaussian_noise(img, sigmas=[0]):
+    sigma = random.choice(sigmas)
+    noise_img = img + sigma * torch.randn_like(img)
+    return noise_img
+
+
 # reverses the normalization transformation
 def invert_normalization(imgs, dataset):
     if dataset == 'imagenet':
@@ -57,7 +64,7 @@ def invert_normalization(imgs, dataset):
 
 
 # applies the normalization transformations
-def apply_normalization(imgs, dataset):
+def apply_normalization(imgs, dataset, sigmas):
     if dataset == 'imagenet':
         mean = IMAGENET_MEAN
         std = IMAGENET_STD
@@ -74,6 +81,7 @@ def apply_normalization(imgs, dataset):
     if dataset == 'mnist':
         imgs_tensor = (imgs_tensor - mean[0]) / std[0]
     else:
+        imgs_tensor = add_gaussian_noise(imgs_tensor, sigmas)
         if imgs.dim() == 3:
             for i in range(imgs_tensor.size(0)):
                 imgs_tensor[i, :, :] = (imgs_tensor[i, :, :] - mean[i]) / std[i]
@@ -84,7 +92,7 @@ def apply_normalization(imgs, dataset):
 
 
 # get most likely predictions and probabilities for a set of inputs
-def get_preds(model, inputs, dataset_name, correct_class=None, batch_size=25, return_cpu=True):
+def get_preds(model, inputs, dataset_name, correct_class=None, batch_size=25, return_cpu=True, sigmas=[0]):
     num_batches = int(math.ceil(inputs.size(0) / float(batch_size)))
     softmax = torch.nn.Softmax(dim=1)
     all_preds, all_probs = None, None
@@ -92,7 +100,7 @@ def get_preds(model, inputs, dataset_name, correct_class=None, batch_size=25, re
     with torch.no_grad():
         for i in range(num_batches):
             upper = min((i + 1) * batch_size, inputs.size(0))
-            input = apply_normalization(inputs[(i * batch_size):upper], dataset_name).cuda()
+            input = apply_normalization(inputs[(i * batch_size):upper], dataset_name, sigmas).cuda()
             output = softmax.forward(model.forward(input))
             if correct_class is None:
                 prob, pred = output.max(1)
@@ -114,14 +122,14 @@ def get_preds(model, inputs, dataset_name, correct_class=None, batch_size=25, re
 
 
 # get least likely predictions and probabilities for a set of inputs
-def get_least_likely(model, inputs, dataset_name, batch_size=25, return_cpu=True):
+def get_least_likely(model, inputs, dataset_name, batch_size=25, return_cpu=True, sigmas=[0]):
     num_batches = int(math.ceil(inputs.size(0) / float(batch_size)))
     softmax = torch.nn.Softmax()
     all_preds, all_probs = None, None
     transform = trans.Normalize(IMAGENET_MEAN, IMAGENET_STD)
     for i in range(num_batches):
         upper = min((i + 1) * batch_size, inputs.size(0))
-        input = apply_normalization(inputs[(i * batch_size):upper], dataset_name)
+        input = apply_normalization(inputs[(i * batch_size):upper], dataset_name, sigmas)
         input_var = torch.autograd.Variable(input.cuda(), volatile=True)
         output = softmax.forward(model.forward(input_var))
         prob, pred = output.min(1)

@@ -5,11 +5,12 @@ import utils
 
 class SimBA:
 
-    def __init__(self, model, dataset, image_size):
+    def __init__(self, model, dataset, image_size, sigmas=[0]):
         self.model = model
         self.dataset = dataset
         self.image_size = image_size
         self.model.eval()
+        self.sigmas = sigmas
 
     def expand_vector(self, x, size):
         batch_size = x.size(0)
@@ -19,7 +20,7 @@ class SimBA:
         return z
 
     def normalize(self, x):
-        return utils.apply_normalization(x, self.dataset)
+        return utils.apply_normalization(x, self.dataset, self.sigmas)
 
     def get_probs(self, x, y):
         output = self.model(self.normalize(x.cuda())).cpu()
@@ -150,6 +151,11 @@ class SimBA:
                 right_mask_remaining = right_improved.unsqueeze(1).repeat(1, n_dims)
                 x[right_indices] = right_vec[right_mask_remaining].view(-1, n_dims)
                 probs_k[right_indices] = right_probs[right_improved]
+            # if (k + 1) % log_every == 0 or k == max_iters - 1:
+            #     # res['remaining'] = remaining.float().mean()
+            #     # res['prob'] = probs[:, k].mean()
+            #     print('Iteration %d: queries = %.4f, prob = %.4f, remaining = %.4f' % (
+            #             k + 1, queries.sum(1).mean(), probs[:, k].mean(), remaining.float().mean()))
             probs[:, k] = probs_k
             queries[:, k] = queries_k
             prev_probs = probs[:, k]
@@ -176,11 +182,6 @@ class SimBA:
                 print("queries={}, rate={:.4f}".format(queries_num, rate))
             else:
                 continue
-            # if (k + 1) % log_every == 0 or k == max_iters - 1:
-            #     # res['remaining'] = remaining.float().mean()
-            #     # res['prob'] = probs[:, k].mean()
-            #     print('Iteration %d: queries = %.4f, prob = %.4f, remaining = %.4f' % (
-            #             k + 1, queries, probs[:, k].mean(), remaining.float().mean()))
         expanded = (images_batch + trans(self.expand_vector(x, expand_dims))).clamp(0, 1)
         preds = self.get_preds(expanded)
         if targeted:
@@ -188,7 +189,6 @@ class SimBA:
         else:
             remaining = preds.eq(labels_batch)
         succs[:, max_iters - 1] = ~remaining
-        # print("remaining = {}, prob = {}".format(res['remaining'], res['prob']))
         for i in res.keys():
             if res[i] == -1:
                 res[i] = 100

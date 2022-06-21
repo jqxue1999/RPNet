@@ -4,28 +4,29 @@ import utils
 
 
 class SimBA:
-    
-    def __init__(self, model, dataset, image_size):
+
+    def __init__(self, model, dataset, image_size, sigmas=[0]):
         self.model = model
         self.dataset = dataset
         self.image_size = image_size
         self.model.eval()
-    
+        self.sigmas = sigmas
+
     def expand_vector(self, x, size):
         batch_size = x.size(0)
         x = x.view(-1, 3, size, size)
         z = torch.zeros(batch_size, 3, self.image_size, self.image_size)
         z[:, :, :size, :size] = x
         return z
-        
+
     def normalize(self, x):
-        return utils.apply_normalization(x, self.dataset)
+        return utils.apply_normalization(x, self.dataset, self.sigmas)
 
     def get_probs(self, x, y):
         output = self.model(self.normalize(x.cuda())).cpu()
         probs = torch.index_select(F.softmax(output, dim=-1).data, 1, y)
         return torch.diag(probs)
-    
+
     def get_preds(self, x):
         output = self.model(self.normalize(x.cuda())).cpu()
         _, preds = output.data.max(1)

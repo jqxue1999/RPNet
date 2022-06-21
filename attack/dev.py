@@ -10,18 +10,19 @@ import models
 from simba_cifar_dev import SimBA
 import pandas as pd
 
-params = {
+base_params = {
     "data_root": "../data",
     "freq_dims": 32,
     "stride": 7,
     "linf_bound": 0.0,
     "order": "rand",
     "num_iters": 0,
-    "pixel_attack": True,
+    "pixel_attack": False,
     "log_every": 10,
     "seed": 47,
     "num_runs": 1000,
-    "batch_size": 128
+    "batch_size": 128,
+    "epsilon": 1
 }
 
 
@@ -34,13 +35,11 @@ def defense(params):
         model = torch.nn.DataParallel(model)
         checkpoint = torch.load(params["model_ckpt"])
         model.load_state_dict(checkpoint['net'])
-    if params["sigma"] != 0:
-        model = models.GaussianNoiseNet(model, params["sigma"])
     utils.setup_seed(params["seed"])
     model.eval()
     image_size = 32
     testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
-    attacker = SimBA(model, 'cifar', image_size)
+    attacker = SimBA(model, 'cifar', image_size, params["sigmas"])
 
     images = torch.zeros(params["num_runs"], 3, image_size, image_size)
     labels = torch.zeros(params["num_runs"]).long()
@@ -49,7 +48,7 @@ def defense(params):
         idx = torch.arange(0, images.size(0)).long()[preds.ne(labels)]
         for i in list(idx):
             images[i], labels[i] = testset[random.randint(0, len(testset) - 1)]
-        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=params["batch_size"])
+        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=params["batch_size"], sigmas=params["sigmas"])
 
     if params["order"] == 'rand':
         n_dims = 3 * params["freq_dims"] * params["freq_dims"]
@@ -76,80 +75,48 @@ def defense(params):
         order=params["order"], targeted=params["targeted"], pixel_attack=params["pixel_attack"],
         log_every=params["log_every"],
         seed=params["seed"])
-    if params["pixel_attack"]:
-        prefix = 'pixel'
-    else:
-        prefix = 'dct'
-    if params["targeted"]:
-        prefix += '_targeted'
 
     return res
 
 
 if __name__ == "__main__":
-    params["targeted"] = True
-    params["compress"] = False
-    params["model_ckpt"] = "../checkpoint/CIFAR10/BaseNet.pth"
-    params["model"] = "BaseNet"
-    params["epsilon"] = 1
-
-    sigmas = [0, 0.003, 0.009, 0.03, 0.09, 0.2]
-    df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
-    for sigma in sigmas:
-        params["sigma"] = sigma
-        a = defense(params)
-        df.loc[sigma] = list(a.values())
-
-    df.to_csv("./results/targeted/{}.csv".format(params["model"]))
-
-
-
-    params["targeted"] = True
-    params["compress"] = True
-    params["model_ckpt"] = "../checkpoint/CIFAR10/eBaseNet-10.pth"
-    params["model"] = "eBaseNet"
-    params["epsilon"] = 1
-
-    sigmas = [0, 0.003, 0.009, 0.03, 0.09, 0.2]
-    df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
-    for sigma in sigmas:
-        params["sigma"] = sigma
-        a = defense(params)
-        df.loc[sigma] = list(a.values())
-
-    df.to_csv("./results/targeted/{}-10.csv".format(params["model"]))
-
-
-
-    params["targeted"] = False
-    params["compress"] = False
-    params["model_ckpt"] = "../checkpoint/CIFAR10/BaseNet.pth"
-    params["model"] = "BaseNet"
-    params["epsilon"] = 1
-
-    sigmas = [0, 0.003, 0.009, 0.03, 0.09, 0.16, 0.19, 0.2, 0.25]
-    df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
-    for sigma in sigmas:
-        params["sigma"] = sigma
-        a = defense(params)
-        df.loc[sigma] = list(a.values())
-
-    df.to_csv("./results/untargeted/{}.csv".format(params["model"]))
-
-
-
-    params["targeted"] = False
-    params["compress"] = True
-    params["model_ckpt"] = "../checkpoint/CIFAR10/eBaseNet-10.pth"
-    params["model"] = "eBaseNet"
-    params["epsilon"] = 1
-    params["sigma"] = 0.2
-
-    sigmas = [0, 0.003, 0.009, 0.03, 0.09, 0.16, 0.19, 0.2, 0.25]
-    df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
-    for sigma in sigmas:
-        params["sigma"] = sigma
-        a = defense(params)
-        df.loc[sigma] = list(a.values())
-
-    df.to_csv("./results/untargeted/{}-10.csv".format(params["model"]))
+    if not os.path.exists('./results/targeted'):
+        os.mkdir('./results/targeted')
+    if not os.path.exists('./results/untargeted'):
+        os.mkdir('./results/untargeted')
+    dev_params = [
+        {
+            "targeted": True,
+            "compress": False,
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas/BaseNet.pth",
+            "model": "BaseNet"
+        },
+        {
+            "targeted": True,
+            "compress": True,
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas/eBaseNet-10.pth",
+            "model": "eBaseNet"
+        },
+        {
+            "targeted": False,
+            "compress": False,
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas/BaseNet.pth",
+            "model": "BaseNet"
+        },
+        {
+            "targeted": False,
+            "compress": True,
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas/eBaseNet-10.pth",
+            "model": "eBaseNet"
+        }
+    ]
+    sigmas = [0.09]
+    for params in dev_params:
+        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
+        for sigma in sigmas:
+            params["sigmas"] = [sigma]
+            params.update(base_params)
+            a = defense(params)
+            df.loc[sigma] = list(a.values())
+        df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
+        print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))
