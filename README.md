@@ -123,9 +123,57 @@ as using the Relu.
 
 I've implemented three different methods based on adding gaussian noise and compared them. They are:
 
-1. adding gaussian noise at output layer.
-2. adding gaussian noise at input layer, which means directly add noise on images.
+1. adding gaussian noise at output layer, which means directly add noise on the confidence of each class.
+2. adding gaussian noise at input layer, which means add noise on images.
 3. adding gaussian noise at input layer and use the model trained with various and optimal noise.
 
 #### add gaussian noise at output layer
-- Why can it work?
+
+In the past researches, a very common method to defense attack is adding random gaussian noise on the input image. The
+reason behind this is that doing so can mislead the results of each query, allowing the attacker to make the opposite
+decision. But, why don't we add gaussian noise directly to the last layer, the confidence layer, which is cheaper and
+more straightforward. Based on this idea, I did a series of related experiments with various sigmas.
+
+- targeted attack
+  ![img_1.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/exp1_targeted.png?raw=true)
+- untargeted attack
+  ![img_2.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/exp1_untargeted.png?raw=true)
+
+Through these figures, we can know this method is an effective way when sigma is optimal. But when sigma turn to larger
+than 0.2, the defense will no longer effective.
+
+#### add gaussian noise at input layer
+
+In this part, I implemented the method mentioned in
+this [paper](https://proceedings.neurips.cc/paper/2021/file/3eb414bf1c2a66a09c185d60553417b8-Paper.pdf) and the results
+will be presented in the next section.
+
+#### add gaussian noise at output layer
+
+Firstly, in this [paper](https://proceedings.neurips.cc/paper/2021/file/3eb414bf1c2a66a09c185d60553417b8-Paper.pdf), the
+author mentioned an improved version of RND. Training the model with gaussian noise in order to mitigate the effect of
+adding noise on the model on clean images. Because the larger sigma is, the better efficiency of defense is, but the
+lower accuracy on clean images is.
+
+However, there is another question: how do decide the sigma of gaussian noise added on the training dataset. Dr. Lou
+mentioned a new idea to add random gaussian noise on it; each training epoch chooses one sigma at random. Intuitively,
+the model training in this way can have a better performance than using a fixed sigma.
+
+The results are showed below.
+
+- targeted attack
+  ![img_3.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/targeted.png?raw=true)
+- untargeted attack
+  ![img_4.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/untargeted.png?raw=true)
+
+The exp1, exp2 and exp3 are my three experiments with adding noise at different layers and different ways. And we can
+see the performance of model3 is the best among them.
+
+But at this time, I have a new question: why is the efficiency of model3 so good? If that's what the paper says, this
+could improve the accuracy of the model on clean images. Then the result should be that with a larger sigma, a better
+defense effect is achieved, and the acc drop is not obvious. But why does this model perform so well at the beginning,
+even if I don't add any noise and sigma=0, it still performs well. My guess is that the act of adding Gaussian noise
+simulates different attack behaviors of the attacker, so the model learns how to resist during training. Therefore, in
+the actual reasoning process, I don't need to add any noise at all, and it can still resist attacks.
+
+Of course this is just my conjecture, we will discuss it in detail on Tuesday.
