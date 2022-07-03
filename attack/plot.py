@@ -72,6 +72,33 @@ acc = {
     "exp2": [74.73, 74.95, 75.15, 72.64, 33.62],
     "exp3": [75.38, 75.54, 75.41, 75.68, 73.7]
 }
+
+exp1_targeted = {
+    "queries": [100, 200, 300, 400, 500, 1000],
+    "data": {
+        "0.0": [66.4, 93, 100, 100, 100, 100],
+        "0.003": [24.2, 33.6, 39.1, 41.4, 42.2, 48.4],
+        "0.009": [25, 30.5, 34.4, 35.9, 35.9, 38.3],
+        "0.03": [15.6, 18, 21.9, 22.7, 24.2, 27.3],
+        "0.09": [12.5, 14.1, 14.8, 14.8, 15.6, 17.2],
+        "0.2": [14.1, 20.3, 22.7, 25, 28.1, 32.8]
+    }
+}
+
+exp1_untargeted = {
+    "queries": [100, 200, 300, 400, 500, 1000],
+    "data": {
+        "0.0": [66.4, 93, 100, 100, 100, 100],
+        "0.003": [74.2, 77.3, 81.2, 82.8, 86.7, 100],
+        "0.009": [70.3, 75, 76.6, 77.3, 80.5, 85.2],
+        "0.03": [58.6, 64.8, 69.5, 69.5, 71.1, 78.1],
+        "0.09": [50.8, 57, 60.2, 66.4, 67.2, 71.1],
+        "0.16": [42.2, 48.4, 50, 53.9, 56.2, 63.3],
+        "0.19": [44.5, 50, 57.8, 61.7, 63.3, 80.5],
+        "0.2": [50.8, 65.6, 75.8, 83.6, 89.1, 100],
+        "0.25": [100, 100, 100, 100, 100, 100]
+    }
+}
 dev_name = ["exp1", "exp2", "exp3"]
 
 
@@ -103,10 +130,32 @@ def show_dev_sccessful_rate(success_rate, accuracy, savedir):
     fig.savefig(savedir)
 
 
+def show_exp1(exp, savedir):
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 5), dpi=120)
+
+    for sigma in exp.get("data").keys():
+        ax[0].plot(exp.get("queries"), exp.get("data").get(sigma), label="sigma={}".format(sigma), marker=".")
+    ax[0].legend()
+    ax[0].set_xticks(exp.get("queries"))
+    ax[0].grid(True)
+    ax[0].set_title("attack successful rate")
+    ax[0].set_xlabel("queries")
+    ax[0].set_ylabel("attack successful rate")
+
+    for idx, query_num in enumerate(exp.get("queries")):
+        ax[1].plot(exp.get("data").keys(), [x[idx] for x in exp.get("data").values()],
+                   label="queries={}".format(query_num), marker=".")
+
+    ax[1].grid(True)
+    ax[1].legend()
+    ax[1].set_title("attack successful rate with different sigma (queries=500)")
+    ax[1].set_xlabel("sigma")
+    ax[1].set_ylabel("attack successful rate")
+    fig.savefig(savedir)
 
 
 if __name__ == "__main__":
-    show_dev_sccessful_rate(targeted, acc, "./image/targeted.png")
-    show_dev_sccessful_rate(untargeted, acc, "./image/untargeted.png")
-    # show_dev_acc(acc, "./image/acc.png")
-
+    # show_dev_sccessful_rate(targeted, acc, "./image/targeted.png")
+    # show_dev_sccessful_rate(untargeted, acc, "./image/untargeted.png")
+    # show_exp1(exp1_targeted, "./image/exp1_targeted.png")
+    show_exp1(exp1_untargeted, "./image/exp1_untargeted.png")

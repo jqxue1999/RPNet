@@ -51,7 +51,7 @@ utils.setup_seed(args.seed)
 model.eval()
 image_size = 32
 testset = dset.CIFAR10(root=args.data_root, train=False, download=True, transform=utils.CIFAR_TRANSFORM)
-attacker = SimBA(model, 'cifar', image_size, [args.sigma])
+attacker = SimBA(model, 'cifar', image_size, args.sigma)
 
 # load sampled images or sample new ones
 # this is to ensure all attacks are run on the same set of correctly classified images
@@ -68,7 +68,7 @@ else:
         idx = torch.arange(0, images.size(0)).long()[preds.ne(labels)]
         for i in list(idx):
             images[i], labels[i] = testset[random.randint(0, len(testset) - 1)]
-        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=args.batch_size, sigmas=[args.sigma])
+        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=args.batch_size, sigma=args.sigma)
     torch.save({'images': images, 'labels': labels}, batchfile)
 
 if args.order == 'rand':

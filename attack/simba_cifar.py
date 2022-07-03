@@ -5,12 +5,12 @@ import utils
 
 class SimBA:
 
-    def __init__(self, model, dataset, image_size, sigmas=[0]):
+    def __init__(self, model, dataset, image_size, sigma=0):
         self.model = model
         self.dataset = dataset
         self.image_size = image_size
         self.model.eval()
-        self.sigmas = sigmas
+        self.sigma = sigma
 
     def expand_vector(self, x, size):
         batch_size = x.size(0)
@@ -20,7 +20,7 @@ class SimBA:
         return z
 
     def normalize(self, x):
-        return utils.apply_normalization(x, self.dataset, self.sigmas)
+        return utils.apply_normalization(x, self.dataset, self.sigma)
 
     def get_probs(self, x, y):
         output = self.model(self.normalize(x.cuda())).cpu()

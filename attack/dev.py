@@ -37,11 +37,11 @@ def defense(params):
         model.load_state_dict(checkpoint['net'])
     utils.setup_seed(params["seed"])
     if params["output_noise"]:
-        model = models.GaussianNoiseNet(model, params["sigmas"][0])
+        model = models.GaussianNoiseNet(model, params["sigma"])
     model.eval()
     image_size = 32
     testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
-    attacker = SimBA(model, 'cifar', image_size, params["sigmas"])
+    attacker = SimBA(model, 'cifar', image_size, params["sigma"])
 
     images = torch.zeros(params["num_runs"], 3, image_size, image_size)
     labels = torch.zeros(params["num_runs"]).long()
@@ -50,7 +50,7 @@ def defense(params):
         idx = torch.arange(0, images.size(0)).long()[preds.ne(labels)]
         for i in list(idx):
             images[i], labels[i] = testset[random.randint(0, len(testset) - 1)]
-        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=params["batch_size"], sigmas=params["sigmas"])
+        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=params["batch_size"], sigma=params["sigma"])
 
     if params["order"] == 'rand':
         n_dims = 3 * params["freq_dims"] * params["freq_dims"]
@@ -90,37 +90,37 @@ if __name__ == "__main__":
         {
             "targeted": True,
             "compress": False,
-            "output_noise": False,
+            "output_noise": True,
             "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
             "model": "BaseNet"
         },
         {
             "targeted": True,
             "compress": True,
-            "output_noise": False,
+            "output_noise": True,
             "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
             "model": "eBaseNet"
         },
         {
             "targeted": False,
             "compress": False,
-            "output_noise": False,
+            "output_noise": True,
             "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
             "model": "BaseNet"
         },
         {
             "targeted": False,
             "compress": True,
-            "output_noise": False,
+            "output_noise": True,
             "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
             "model": "eBaseNet"
         }
     ]
-    sigmas = [0.003, 0.009, 0.03, 0.09]
+    sigmas = [0.003, 0.009, 0.03, 0.09, 0.16, 0.19, 0.2, 0.25]
     for params in dev_params:
         df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
         for sigma in sigmas:
-            params["sigmas"] = [sigma]
+            params["sigma"] = sigma
             params.update(base_params)
             a = defense(params)
             df.loc[sigma] = list(a.values())

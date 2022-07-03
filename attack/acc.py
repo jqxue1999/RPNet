@@ -3,19 +3,17 @@ from models.CIFAR10 import BaseNet, eBaseNet
 import torchvision.transforms as transforms
 import torchvision
 from utils import add_gaussian_noise
-import random
 
 
-def add_gaussian_noise(img, sigmas):
-    sigma = random.choice(sigmas)
+def add_gaussian_noise(img, sigma):
     noise_img = img + sigma * torch.randn_like(img)
     return noise_img
 
 
-def get_dataset(dataset_dir, batch_size=64, sigmas=[0]):
+def get_dataset(dataset_dir, batch_size=64, sigma=0):
     transform_test = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Lambda(lambda img: add_gaussian_noise(img, sigmas)),
+        transforms.Lambda(lambda img: add_gaussian_noise(img, sigma)),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
     ])
     test_data = torchvision.datasets.CIFAR10(root=dataset_dir, train=False, download=True, transform=transform_test)
@@ -44,13 +42,13 @@ def test(model, dataloader):
 
 
 if __name__ == '__main__':
-    model = torch.load("../checkpoint/CIFAR10/sigmas2/eBaseNet-10.pth")
+    model = torch.load("../checkpoint/CIFAR10/eBaseNet-10.pth")
     # model = BaseNet()
     # model = torch.nn.DataParallel(model)
-    # checkpoint = torch.load("../checkpoint/CIFAR10/sigmas2/BaseNet.pth")
+    # checkpoint = torch.load("../checkpoint/CIFAR10/BaseNet.pth")
     # model.load_state_dict(checkpoint['net'])
     for sigma in [0.0, 0.003, 0.009, 0.03, 0.09]:
-        testset = get_dataset("../data", 128, [sigma])
+        testset = get_dataset("../data", 128, sigma)
         # if sigma != 0:
         #     model = GaussianNoiseNet(model, sigma)
         print("sigma = {}".format(sigma))
