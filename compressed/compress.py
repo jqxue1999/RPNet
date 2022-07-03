@@ -105,11 +105,11 @@ class CompressedModel(nn.Module):
             if not isinstance(layer, (nn.BatchNorm1d, nn.BatchNorm2d)):
                 layers.append(layer)
                 if 'bias' in layers[-1].state_dict():
-                    layers[-1].bias.data = self.input_scale*layers[-1].bias.data
+                    layers[-1].bias.data = self.input_scale * layers[-1].bias.data
             else:
                 scale = torch.rsqrt(layer.running_var + 1e-5)
-                layers[-1].weight.data = layers[-1].weight.data*scale[:, None, None, None]
-                layers[-1].bias.data = (layers[-1].bias.data - self.input_scale*layer.running_mean)*scale
+                layers[-1].weight.data = layers[-1].weight.data * scale[:, None, None, None]
+                layers[-1].bias.data = (layers[-1].bias.data - self.input_scale * layer.running_mean) * scale
         return nn.Sequential(*layers)
 
     def remove_batchnorm(self, model):
@@ -131,7 +131,7 @@ class CompressedModel(nn.Module):
         w_size = compute_integral_part(layer.weight, overflow_rate=0.0)
         layer.weight.data = linear_quantize(layer.weight.data, w_size, self.weight_bits)
         b_size = self.weight_bits - w_size + in_size
-        layer.bias.data = torch.round(layer.bias.data*(2**b_size))
+        layer.bias.data = torch.round(layer.bias.data * (2 ** b_size))
         return b_size
 
     def quantize_params(self, overflow_rate=0.0):

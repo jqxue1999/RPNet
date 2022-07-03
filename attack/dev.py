@@ -36,6 +36,8 @@ def defense(params):
         checkpoint = torch.load(params["model_ckpt"])
         model.load_state_dict(checkpoint['net'])
     utils.setup_seed(params["seed"])
+    if params["output_noise"]:
+        model = models.GaussianNoiseNet(model, params["sigmas"][0])
     model.eval()
     image_size = 32
     testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
@@ -88,29 +90,33 @@ if __name__ == "__main__":
         {
             "targeted": True,
             "compress": False,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas/BaseNet.pth",
+            "output_noise": False,
+            "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
             "model": "BaseNet"
         },
         {
             "targeted": True,
             "compress": True,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas/eBaseNet-10.pth",
+            "output_noise": False,
+            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
             "model": "eBaseNet"
         },
         {
             "targeted": False,
             "compress": False,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas/BaseNet.pth",
+            "output_noise": False,
+            "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
             "model": "BaseNet"
         },
         {
             "targeted": False,
             "compress": True,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas/eBaseNet-10.pth",
+            "output_noise": False,
+            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
             "model": "eBaseNet"
         }
     ]
-    sigmas = [0.09]
+    sigmas = [0.003, 0.009, 0.03, 0.09]
     for params in dev_params:
         df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
         for sigma in sigmas:
