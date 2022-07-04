@@ -159,7 +159,14 @@ However, there is another question: how do decide the sigma of gaussian noise ad
 mentioned a new idea to add random gaussian noise on it; each training epoch chooses one sigma at random. Intuitively,
 the model training in this way can have a better performance than using a fixed sigma.
 
-The results are showed below.
+Run code `tensorboard --logidr="./attack/logs"` to see the influence of adding gaussian noise on images.
+
+![gaussian influence.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/logs/gaussian%20image.png?raw=true)
+
+We can see that when sigma is greater than 0.19, the image quality is seriously degraded, so the Gaussian noise I
+add in training is less than 0.19.
+
+The attack results are showed below.
 
 - targeted attack
   ![img_3.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/targeted.png?raw=true)
