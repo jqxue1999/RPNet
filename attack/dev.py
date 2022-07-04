@@ -22,7 +22,8 @@ base_params = {
     "seed": 47,
     "num_runs": 1000,
     "batch_size": 128,
-    "epsilon": 1
+    "sigma": 0.009,
+    "sigma2": 0.009
 }
 
 
@@ -37,7 +38,7 @@ def defense(params):
         model.load_state_dict(checkpoint['net'])
     utils.setup_seed(params["seed"])
     if params["output_noise"]:
-        model = models.GaussianNoiseNet(model, params["sigma"])
+        model = models.GaussianNoiseNet(model, params["sigma2"])
     model.eval()
     image_size = 32
     testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
@@ -87,42 +88,42 @@ if __name__ == "__main__":
     if not os.path.exists('./results/untargeted'):
         os.mkdir('./results/untargeted')
     dev_params = [
-        {
-            "targeted": True,
-            "compress": False,
-            "output_noise": True,
-            "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
-            "model": "BaseNet"
-        },
+        # {
+        #     "targeted": True,
+        #     "compress": False,
+        #     "output_noise": False,
+        #     "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
+        #     "model": "BaseNet"
+        # },
         {
             "targeted": True,
             "compress": True,
             "output_noise": True,
-            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas2/eBaseNet-10.pth",
             "model": "eBaseNet"
         },
-        {
-            "targeted": False,
-            "compress": False,
-            "output_noise": True,
-            "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
-            "model": "BaseNet"
-        },
+        # {
+        #     "targeted": False,
+        #     "compress": False,
+        #     "output_noise": False,
+        #     "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
+        #     "model": "BaseNet"
+        # },
         {
             "targeted": False,
             "compress": True,
             "output_noise": True,
-            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas2/eBaseNet-10.pth",
             "model": "eBaseNet"
         }
     ]
-    sigmas = [0.003, 0.009, 0.03, 0.09, 0.16, 0.19, 0.2, 0.25]
+    epsilons = [0.5, 0.8, 1.0, 1.3, 1.5, 1.8, 2.0]
     for params in dev_params:
-        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
-        for sigma in sigmas:
-            params["sigma"] = sigma
+        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=epsilons)
+        for epsilon in epsilons:
+            params["epsilon"] = epsilon
             params.update(base_params)
             a = defense(params)
-            df.loc[sigma] = list(a.values())
+            df.loc[epsilon] = list(a.values())
         df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
         print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))
