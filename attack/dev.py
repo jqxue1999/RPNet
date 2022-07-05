@@ -22,8 +22,8 @@ base_params = {
     "seed": 47,
     "num_runs": 1000,
     "batch_size": 128,
-    "sigma": 0.009,
-    "sigma2": 0.009
+    "sigma": 0.0,
+    "sigma2": 0.0
 }
 
 
@@ -98,8 +98,8 @@ if __name__ == "__main__":
         {
             "targeted": True,
             "compress": True,
-            "output_noise": True,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas2/eBaseNet-10.pth",
+            "output_noise": False,
+            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
             "model": "eBaseNet"
         },
         # {
@@ -112,8 +112,8 @@ if __name__ == "__main__":
         {
             "targeted": False,
             "compress": True,
-            "output_noise": True,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas2/eBaseNet-10.pth",
+            "output_noise": False,
+            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
             "model": "eBaseNet"
         }
     ]
