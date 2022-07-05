@@ -217,3 +217,8 @@ if __name__ == "__main__":
     show_exp(data, "exp2", "./image/fix sigma/exp2_targeted", "targeted")
     show_exp(data, "exp3", "./image/fix sigma/exp3_targeted", "targeted")
     show_exp(data, "exp4", "./image/fix sigma/exp4_targeted", "targeted")
+
+    show_exp(data, "exp1", "./image/fix sigma/exp1_untargeted", "untargeted")
+    show_exp(data, "exp2", "./image/fix sigma/exp2_untargeted", "untargeted")
+    show_exp(data, "exp3", "./image/fix sigma/exp3_untargeted", "untargeted")
+    show_exp(data, "exp4", "./image/fix sigma/exp4_untargeted", "untargeted")
