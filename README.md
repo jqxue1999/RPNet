@@ -127,12 +127,14 @@ I've implemented three different methods based on adding gaussian noise and comp
 2. adding gaussian noise at input layer, which means add noise on images.
 3. adding gaussian noise at input layer and use the model trained with various and optimal noise.
 
-#### add gaussian noise at output layer
+#### exp1: add gaussian noise at output layer
 
 In the past researches, a very common method to defense attack is adding random gaussian noise on the input image. The
 reason behind this is that doing so can mislead the results of each query, allowing the attacker to make the opposite
 decision. But, why don't we add gaussian noise directly to the last layer, the confidence layer, which is cheaper and
 more straightforward. Based on this idea, I did a series of related experiments with various sigmas.
+
+If I set epsilon=1 then fix it,
 
 - targeted attack
   ![img_1.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/exp1_targeted.png?raw=true)
@@ -142,20 +144,20 @@ more straightforward. Based on this idea, I did a series of related experiments 
 Through these figures, we can know this method is an effective way when sigma is optimal. But when sigma turn to larger
 than 0.2, the defense will no longer effective.
 
-#### add gaussian noise at input layer
+#### exp2: add gaussian noise at input layer
 
 In this part, I implemented the method mentioned in
 this [paper](https://proceedings.neurips.cc/paper/2021/file/3eb414bf1c2a66a09c185d60553417b8-Paper.pdf) and the results
 will be presented in the next section.
 
-#### add gaussian noise at output layer
+#### exp3: add gaussian noise at output layer
 
 Firstly, in this [paper](https://proceedings.neurips.cc/paper/2021/file/3eb414bf1c2a66a09c185d60553417b8-Paper.pdf), the
 author mentioned an improved version of RND. Training the model with gaussian noise in order to mitigate the effect of
 adding noise on the model on clean images. Because the larger sigma is, the better efficiency of defense is, but the
 lower accuracy on clean images is.
 
-However, there is another question: how do decide the sigma of gaussian noise added on the training dataset. Dr. Lou
+However, there is another question: how to decide the sigma of gaussian noise added on the training dataset. Dr. Lou
 mentioned a new idea to add random gaussian noise on it; each training epoch chooses one sigma at random. Intuitively,
 the model training in this way can have a better performance than using a fixed sigma.
 
@@ -184,3 +186,45 @@ simulates different attack behaviors of the attacker, so the model learns how to
 the actual reasoning process, I don't need to add any noise at all, and it can still resist attacks.
 
 Of course this is just my conjecture, we will discuss it in detail on Tuesday.
+
+### More Analysis
+
+In the last part, I set the epsilon=1.0 and fix it to test different sigma.
+
+In this part, I'll set sigma=0.0 and sigma=0.009 then fix it, to see this model's defensive ability against different
+epsilon.
+
+#### exp1: add gaussian noise at output layer
+
+- targeted attack
+  ![exp1_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp1_targeted.png?raw=true)
+- untargeted attack
+  ![exp1_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp1_untargeted.png?raw=true)
+
+#### exp2: add gaussian noise at input layer
+
+- targeted attack
+  ![exp2_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp2_targeted.png?raw=true)
+- untargeted attack
+  ![exp2_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp1_untargeted.png?raw=true)
+
+#### exp3: add gaussian noise at input layer
+
+- targeted attack
+  ![exp3_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp3_targeted.png?raw=true)
+- untargeted attack
+  ![exp3_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp3_untargeted.png?raw=true)
+
+#### exp4: combine exp1 and exp3
+
+- targeted attack
+  ![exp4_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp4_targeted.png?raw=true)
+- untargeted attack
+  ![exp4_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp4_untargeted.png?raw=true)
+
+#### all data
+
+- targeted attack
+  ![all_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/all_targeted.png?raw=true)
+- untargeted attack
+  ![all_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/all_untargeted.png?raw=true)
