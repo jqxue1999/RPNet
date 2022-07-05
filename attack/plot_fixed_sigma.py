@@ -5,6 +5,26 @@ queries = [100, 200, 300, 400, 500, 1000]
 
 data = {
     "exp1": {
+        "sigma=0.0": {
+            "targeted": {
+                "epsilon=0.5": [7.8, 13.3, 15.6, 22.7, 27.3, 46.9],
+                "epsilon=0.8": [29.7, 50.0, 57.8, 67.2, 73.4, 90.6],
+                "epsilon=1.0": [58.6, 76.6, 84.4, 88.3, 92.2, 100],
+                "epsilon=1.3": [80.5, 92.2, 97.7, 100, 100, 100],
+                "epsilon=1.5": [83.6, 94.5, 96.9, 100, 100, 100],
+                "epsilon=1.8": [91.4, 100, 100, 100, 100, 100],
+                "epsilon=2.0": [100, 100, 100, 100, 100, 100]
+            },
+            "untargeted": {
+                "epsilon=0.5": [26.6, 43.8, 60.2, 68.0, 75.8, 85.2],
+                "epsilon=0.8": [90.6, 93.8, 94.5, 95.3, 100, 100],
+                "epsilon=1.0": [97.7, 100, 100, 100, 100, 100],
+                "epsilon=1.3": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.5": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.8": [100, 100, 100, 100, 100, 100],
+                "epsilon=2.0": [100, 100, 100, 100, 100, 100]
+            }
+        },
         "sigma=0.009": {
             "targeted": {
                 "epsilon=0.5": [7.8, 10.2, 11.7, 13.3, 13.3, 16.4],
@@ -27,6 +47,26 @@ data = {
         }
     },
     "exp2": {
+        "sigma=0.0": {
+            "targeted": {
+                "epsilon=0.5": [7.8, 13.3, 15.6, 22.7, 27.3, 46.9],
+                "epsilon=0.8": [29.7, 50.0, 57.8, 67.2, 73.4, 90.6],
+                "epsilon=1.0": [58.6, 76.6, 84.4, 88.3, 92.2, 100],
+                "epsilon=1.3": [80.5, 92.2, 97.7, 100, 100, 100],
+                "epsilon=1.5": [83.6, 94.5, 96.9, 100, 100, 100],
+                "epsilon=1.8": [91.4, 100, 100, 100, 100, 100],
+                "epsilon=2.0": [100, 100, 100, 100, 100, 100]
+            },
+            "untargeted": {
+                "epsilon=0.5": [26.6, 43.8, 60.2, 68.0, 75.8, 85.2],
+                "epsilon=0.8": [90.6, 93.8, 94.5, 95.3, 100, 100],
+                "epsilon=1.0": [97.7, 100, 100, 100, 100, 100],
+                "epsilon=1.3": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.5": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.8": [100, 100, 100, 100, 100, 100],
+                "epsilon=2.0": [100, 100, 100, 100, 100, 100]
+            }
+        },
         "sigma=0.009": {
             "targeted": {
                 "epsilon=0.5": [2.3, 3.9, 10.2, 12.5, 18.8, 29.7],
@@ -173,5 +213,7 @@ def show_exp(success_rate, exp, savedir, targeted):
 if __name__ == "__main__":
     show_dev_sccessful_rate(data, "./image/fix sigma/all_untargeted.png", "untargeted")
     show_dev_sccessful_rate(data, "./image/fix sigma/all_targeted.png", "targeted")
+    show_exp(data, "exp1", "./image/fix sigma/exp1_targeted", "targeted")
+    show_exp(data, "exp2", "./image/fix sigma/exp2_targeted", "targeted")
     show_exp(data, "exp3", "./image/fix sigma/exp3_targeted", "targeted")
     show_exp(data, "exp4", "./image/fix sigma/exp4_targeted", "targeted")
