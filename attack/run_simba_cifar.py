@@ -9,6 +9,7 @@ import random
 import argparse
 import models
 from simba_cifar import SimBA
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser(description='Runs SimBA on a set of images')
 parser.add_argument('--data_root', type=str, default='./data', help='root directory of imagenet data')
@@ -50,7 +51,7 @@ else:
 utils.setup_seed(args.seed)
 model.eval()
 image_size = 32
-testset = dset.CIFAR10(root=args.data_root, train=False, download=True, transform=utils.CIFAR_TRANSFORM)
+testset = dset.CIFAR10(root=args.data_root, train=True, download=True, transform=utils.CIFAR_TRANSFORM)
 attacker = SimBA(model, 'cifar', image_size, args.sigma)
 
 # load sampled images or sample new ones
@@ -80,7 +81,7 @@ if args.num_iters > 0:
 else:
     max_iters = int(n_dims)
 N = int(math.floor(float(args.num_runs) / float(args.batch_size)))
-for i in range(N):
+for i in tqdm(range(N)):
     upper = min((i + 1) * args.batch_size, args.num_runs)
     images_batch = images[(i * args.batch_size):upper]
     labels_batch = labels[(i * args.batch_size):upper]
@@ -90,7 +91,7 @@ for i in range(N):
         while labels_targeted.eq(labels_batch).sum() > 0:
             labels_targeted = torch.floor(10 * torch.rand(labels_batch.size())).long()
         labels_batch = labels_targeted
-    adv, probs, succs, queries, l2_norms, linf_norms, info = attacker.simba_batch(
+    adv, probs, succs, queries, l2_norms, linf_norms, info, attack_images = attacker.simba_batch(
         images_batch, labels_batch, max_iters, args.freq_dims, args.stride, args.epsilon, linf_bound=args.linf_bound,
         order=args.order, targeted=args.targeted, pixel_attack=args.pixel_attack, log_every=args.log_every,
         seed=args.seed)
@@ -101,6 +102,7 @@ for i in range(N):
         all_queries = queries
         all_l2_norms = l2_norms
         all_linf_norms = linf_norms
+        all_attack_images = attack_images
     else:
         all_adv = torch.cat([all_adv, adv], dim=0)
         all_probs = torch.cat([all_probs, probs], dim=0)
@@ -108,6 +110,7 @@ for i in range(N):
         all_queries = torch.cat([all_queries, queries], dim=0)
         all_l2_norms = torch.cat([all_l2_norms, l2_norms], dim=0)
         all_linf_norms = torch.cat([all_linf_norms, linf_norms], dim=0)
+        all_attack_images = all_attack_images + attack_images
     if args.pixel_attack:
         prefix = 'pixel'
     else:
@@ -119,6 +122,7 @@ for i in range(N):
         args.save_suffix)
     torch.save({'adv': all_adv, 'probs': all_probs, 'succs': all_succs, 'queries': all_queries,
                 'l2_norms': all_l2_norms, 'linf_norms': all_linf_norms}, savefile)
+torch.save(all_attack_images, "./attack_images/test3.pth")
 
 # import matplotlib.pyplot as plt
 # import numpy as np

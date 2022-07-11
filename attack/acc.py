@@ -42,12 +42,12 @@ def test(model, dataloader):
 
 
 if __name__ == '__main__':
-    model = torch.load("../checkpoint/CIFAR10/eBaseNet-10.pth")
+    model = torch.load("../checkpoint/CIFAR10/sigmas4/eBaseNet-10.pth")
     # model = BaseNet()
     # model = torch.nn.DataParallel(model)
     # checkpoint = torch.load("../checkpoint/CIFAR10/BaseNet.pth")
     # model.load_state_dict(checkpoint['net'])
-    for sigma in [0.0, 0.003, 0.009, 0.03, 0.09]:
+    for sigma in [0.0, 0.003, 0.009, 0.03, 0.09, 0.19]:
         testset = get_dataset("../data", 128, sigma)
         # if sigma != 0:
         #     model = GaussianNoiseNet(model, sigma)

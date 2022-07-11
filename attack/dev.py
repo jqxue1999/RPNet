@@ -23,7 +23,8 @@ base_params = {
     "num_runs": 1000,
     "batch_size": 128,
     "sigma": 0.0,
-    "sigma2": 0.0
+    "sigma2": 0.0,
+    "epsilon": 1.0
 }
 
 
@@ -99,7 +100,7 @@ if __name__ == "__main__":
             "targeted": True,
             "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas4/eBaseNet-10.pth",
             "model": "eBaseNet"
         },
         # {
@@ -113,17 +114,18 @@ if __name__ == "__main__":
             "targeted": False,
             "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/CIFAR10/eBaseNet-10.pth",
+            "model_ckpt": "../checkpoint/CIFAR10/sigmas4/eBaseNet-10.pth",
             "model": "eBaseNet"
         }
     ]
-    epsilons = [0.5, 0.8, 1.0, 1.3, 1.5, 1.8, 2.0]
+    sigmas = [0, 0.003, 0.009, 0.03, 0.09, 0.19]
+    # epsilons = [0.5, 0.8, 1.0, 1.3, 1.5, 1.8, 2.0]
     for params in dev_params:
-        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=epsilons)
-        for epsilon in epsilons:
-            params["epsilon"] = epsilon
+        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
+        for sigma in sigmas:
+            base_params["sigma"] = sigma
             params.update(base_params)
             a = defense(params)
-            df.loc[epsilon] = list(a.values())
+            df.loc[sigma] = list(a.values())
         df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
         print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))

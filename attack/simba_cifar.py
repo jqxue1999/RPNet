@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import utils
+from tqdm import tqdm
 
 
 class SimBA:
@@ -59,6 +60,7 @@ class SimBA:
     def simba_batch(self, images_batch, labels_batch, max_iters, freq_dims, stride, epsilon, linf_bound=0.0,
                     order='rand', targeted=False, pixel_attack=False, log_every=1, seed=47):
         res = {"remaining": 0, "prob": 0}
+        attack_img = []
         utils.setup_seed(seed)
         batch_size = images_batch.size(0)
         image_size = images_batch.size(2)
@@ -166,5 +168,7 @@ class SimBA:
             remaining = preds.eq(labels_batch)
         succs[:, max_iters-1] = ~remaining
         # print("remaining = {}, prob = {}".format(res['remaining'], res['prob']))
-
-        return expanded, probs, succs, queries, l2_norms, linf_norms, res
+        for i in tqdm(range(images_batch.shape[0])):
+            if preds[i] != labels_batch[i]:
+                attack_img.append({"tensor": images_batch[i], "label": labels_batch[i]})
+        return expanded, probs, succs, queries, l2_norms, linf_norms, res, attack_img

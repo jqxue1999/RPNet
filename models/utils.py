@@ -5,19 +5,22 @@ import numpy as np
 import random
 
 
-def add_gaussian_noise(img, sigmas):
-    sigma = random.choice(sigmas)
+def add_gaussian_noise(img, sigmas, is_single=False):
+    if is_single:
+        sigma = sigmas[0] * random.random()
+    else:
+        sigma = random.choice(sigmas)
     noise_img = img + sigma * torch.randn_like(img)
     return noise_img
 
 
-def get_dataset(dataset_name, dataset_dir, batch_size=64, sigmas=[0]):
+def get_dataset(dataset_name, dataset_dir, batch_size=64, sigmas=[0], is_single=False):
     if dataset_name == "CIFAR10":
         transform_train = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Lambda(lambda img: add_gaussian_noise(img, sigmas)),
+            transforms.Lambda(lambda img: add_gaussian_noise(img, sigmas, is_single)),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])
         transform_test = transforms.Compose([

@@ -61,8 +61,8 @@ def plot_score(model, img_dir):
 
 
 if __name__ == '__main__':
-    BaseAcc, BaseLoss = get_acc_loss("BaseNet", "../checkpoint/CIFAR10/BaseNet.pth", "../data")
-    eBaseAcc, eBaseLoss = get_acc_loss("eBaseNet", "../checkpoint/CIFAR10/eBaseNet.pth", "../data")
+    BaseAcc, BaseLoss = get_acc_loss("BaseNet", "../checkpoint/CIFAR10/base/BaseNet.pth", "../data")
+    eBaseAcc, eBaseLoss = get_acc_loss("eBaseNet", "../checkpoint/CIFAR10/base/eBaseNet.pth", "../data")
     Base = {"Acc": BaseAcc, "Loss": BaseLoss, "name": "BaseNet"}
     eBase = {"Acc": eBaseAcc, "Loss": eBaseLoss, "name": "eBaseNet"}
     plot_score(Base, "./image/")
