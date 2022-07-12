@@ -8,11 +8,16 @@ import utils
 import random
 import models
 from simba_cifar_dev import SimBA
+import numpy as np
 import pandas as pd
+from PIL import Image
 
 base_params = {
     "data_root": "../data",
-    "freq_dims": 32,
+    "dataset": "SkinCancer",
+    "model_type": "SkinCancer",
+    "freq_dims": 28,
+    "image_size": 28,
     "stride": 7,
     "linf_bound": 0.0,
     "order": "rand",
@@ -28,12 +33,32 @@ base_params = {
 }
 
 
+class SkinCancerData(torch.utils.data.Dataset):
+    def __init__(self, df_dir, transform=None):
+        super().__init__()
+        self.data_array = pd.read_csv(df_dir).to_numpy()
+        self.transform = transform
+
+    def __len__(self):
+        return self.data_array.shape[0]
+
+    def __getitem__(self, index):
+        # Load data and get label
+        X = Image.fromarray(np.uint8(self.data_array[index, :-1].reshape(28, 28, 3)))
+        y = torch.tensor(int(self.data_array[index, -1]))
+
+        if self.transform:
+            X = self.transform(X)
+
+        return X, y
+
+
 def defense(params):
     # load model and dataset
     if params["compress"]:
         model = torch.load(params["model_ckpt"])
     else:
-        model = getattr(getattr(models, "CIFAR10"), params["model"])().cuda()
+        model = getattr(getattr(models, params["model_type"]), params["model"])().cuda()
         model = torch.nn.DataParallel(model)
         checkpoint = torch.load(params["model_ckpt"])
         model.load_state_dict(checkpoint['net'])
@@ -41,23 +66,26 @@ def defense(params):
     if params["output_noise"]:
         model = models.GaussianNoiseNet(model, params["sigma2"])
     model.eval()
-    image_size = 32
-    testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
-    attacker = SimBA(model, 'cifar', image_size, params["sigma"])
+    if params["dataset"] == "SkinCancer":
+        testset = SkinCancerData(os.path.join(params["data_root"], 'SkinCancer', 'test.csv'), utils.DEFAULT_TRANSFORM)
+    if params["dataset"] == "cifar":
+        testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
+    attacker = SimBA(model, params["dataset"], params["image_size"], params["sigma"])
 
-    images = torch.zeros(params["num_runs"], 3, image_size, image_size)
+    images = torch.zeros(params["num_runs"], 3, params["image_size"], params["image_size"])
     labels = torch.zeros(params["num_runs"]).long()
     preds = labels + 1
     while preds.ne(labels).sum() > 0:
         idx = torch.arange(0, images.size(0)).long()[preds.ne(labels)]
         for i in list(idx):
             images[i], labels[i] = testset[random.randint(0, len(testset) - 1)]
-        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=params["batch_size"], sigma=params["sigma"])
+        preds[idx], _ = utils.get_preds(model, images[idx], params["dataset"], batch_size=params["batch_size"],
+                                        sigma=params["sigma"])
 
     if params["order"] == 'rand':
         n_dims = 3 * params["freq_dims"] * params["freq_dims"]
     else:
-        n_dims = 3 * image_size * image_size
+        n_dims = 3 * params["image_size"] * params["image_size"]
     if params["num_iters"] > 0:
         max_iters = int(min(n_dims, params["num_iters"]))
     else:
@@ -100,7 +128,7 @@ if __name__ == "__main__":
             "targeted": True,
             "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas4/eBaseNet-10.pth",
+            "model_ckpt": "../checkpoint/SkinCancer/sigmas/eBaseNet-16.pth",
             "model": "eBaseNet"
         },
         # {
@@ -114,18 +142,28 @@ if __name__ == "__main__":
             "targeted": False,
             "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/CIFAR10/sigmas4/eBaseNet-10.pth",
+            "model_ckpt": "../checkpoint/SkinCancer/sigmas/eBaseNet-16.pth",
             "model": "eBaseNet"
         }
     ]
-    sigmas = [0, 0.003, 0.009, 0.03, 0.09, 0.19]
-    # epsilons = [0.5, 0.8, 1.0, 1.3, 1.5, 1.8, 2.0]
+    # sigmas = [0, 0.003, 0.009, 0.03, 0.09]
+    # for params in dev_params:
+    #     df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
+    #     for sigma in sigmas:
+    #         base_params["sigma"] = sigma
+    #         params.update(base_params)
+    #         a = defense(params)
+    #         df.loc[sigma] = list(a.values())
+    #     df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
+    #     print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))
+
+    epsilons = [0.5, 0.8, 1.0, 1.3, 1.5, 1.8, 2.0]
     for params in dev_params:
-        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
-        for sigma in sigmas:
-            base_params["sigma"] = sigma
+        df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=epsilons)
+        for epsilon in epsilons:
+            base_params["epsilon"] = epsilon
             params.update(base_params)
             a = defense(params)
-            df.loc[sigma] = list(a.values())
+            df.loc[epsilon] = list(a.values())
         df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
         print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))

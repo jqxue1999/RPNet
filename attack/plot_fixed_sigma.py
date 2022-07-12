@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-dev_name = ["exp1", "exp2", "exp3", "exp4"]
+dev_name = ["exp1", "exp2", "exp3", "exp4", "exp5"]
 queries = [100, 200, 300, 400, 500, 1000]
 
 data = {
@@ -171,12 +171,54 @@ data = {
                 "epsilon=2.0": [46.1, 48.4, 50.8, 50.8, 51.6, 56.2]
             }
         }
+    },
+    "exp5": {
+        "sigma=0.0": {
+            "targeted": {
+                "epsilon=0.5": [5.5, 7, 8.6, 8.6, 9.4, 17.2],
+                "epsilon=0.8": [16.4, 21.9, 31.2, 33.6, 39.1, 50],
+                "epsilon=1.0": [24.2, 37.5, 45.3, 53.9, 56.2, 73.4],
+                "epsilon=1.3": [47.7, 70.3, 74.2, 78.9, 84.4, 88.3],
+                "epsilon=1.5": [67.2, 80.5, 85.9, 89.1, 90.6, 100],
+                "epsilon=1.8": [74.2, 87.5, 92.2, 93.8, 94.5, 100],
+                "epsilon=2.0": [86.7, 91.4, 94.5, 96.9, 100, 100]
+            },
+            "untargeted": {
+                "epsilon=0.5": [38.3, 47.7, 56.2, 67.2, 73.4, 85.2],
+                "epsilon=0.8": [92.2, 97.7, 100, 100, 100, 100],
+                "epsilon=1.0": [99.2, 100, 100, 100, 100, 100],
+                "epsilon=1.3": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.5": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.8": [100, 100, 100, 100, 100, 100],
+                "epsilon=2.0": [100, 100, 100, 100, 100, 100]
+            }
+        },
+        "sigma=0.009": {
+            "targeted": {
+                "epsilon=0.5": [4.7, 6.2, 6.2, 6.2, 6.2, 12.5],
+                "epsilon=0.8": [13.3, 19.5, 28.9, 34.4, 42.2, 57],
+                "epsilon=1.0": [24.2, 41.4, 47.7, 53.1, 57.8, 70.3],
+                "epsilon=1.3": [49.2, 66.4, 79.7, 86.7, 87.5, 100],
+                "epsilon=1.5": [54.7, 78.9, 92.2, 94.5, 96.9, 100],
+                "epsilon=1.8": [76.6, 89.1, 96.1, 96.9, 100, 100],
+                "epsilon=2.0": [87.5, 94.5, 96.9, 100, 100, 100]
+            },
+            "untargeted": {
+                "epsilon=0.5": [34.4, 43, 52.3, 58.6, 63.3, 81.2],
+                "epsilon=0.8": [90.6, 96.9, 100, 100, 100, 100],
+                "epsilon=1.0": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.3": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.5": [100, 100, 100, 100, 100, 100],
+                "epsilon=1.8": [100, 100, 100, 100, 100, 100],
+                "epsilon=2.0": [100, 100, 100, 100, 100, 100]
+            }
+        }
     }
 }
 
 
 def show_dev_sccessful_rate(success_rate, savedir, targeted):
-    fig, ax = plt.subplots(nrows=1, ncols=4, figsize=(18, 5), dpi=120)
+    fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(22, 5), dpi=120)
 
     for idx, exp in enumerate(data.keys()):
         dev_dict = success_rate.get(exp)
@@ -213,12 +255,14 @@ def show_exp(success_rate, exp, savedir, targeted):
 if __name__ == "__main__":
     show_dev_sccessful_rate(data, "./image/fix sigma/all_untargeted.png", "untargeted")
     show_dev_sccessful_rate(data, "./image/fix sigma/all_targeted.png", "targeted")
-    show_exp(data, "exp1", "./image/fix sigma/exp1_targeted", "targeted")
-    show_exp(data, "exp2", "./image/fix sigma/exp2_targeted", "targeted")
-    show_exp(data, "exp3", "./image/fix sigma/exp3_targeted", "targeted")
-    show_exp(data, "exp4", "./image/fix sigma/exp4_targeted", "targeted")
+    # show_exp(data, "exp1", "./image/fix sigma/exp1_targeted", "targeted")
+    # show_exp(data, "exp2", "./image/fix sigma/exp2_targeted", "targeted")
+    # show_exp(data, "exp3", "./image/fix sigma/exp3_targeted", "targeted")
+    # show_exp(data, "exp4", "./image/fix sigma/exp4_targeted", "targeted")
+    # show_exp(data, "exp5", "./image/fix sigma/exp5_targeted", "targeted")
 
-    show_exp(data, "exp1", "./image/fix sigma/exp1_untargeted", "untargeted")
-    show_exp(data, "exp2", "./image/fix sigma/exp2_untargeted", "untargeted")
-    show_exp(data, "exp3", "./image/fix sigma/exp3_untargeted", "untargeted")
-    show_exp(data, "exp4", "./image/fix sigma/exp4_untargeted", "untargeted")
+    # show_exp(data, "exp1", "./image/fix sigma/exp1_untargeted", "untargeted")
+    # show_exp(data, "exp2", "./image/fix sigma/exp2_untargeted", "untargeted")
+    # show_exp(data, "exp3", "./image/fix sigma/exp3_untargeted", "untargeted")
+    # show_exp(data, "exp4", "./image/fix sigma/exp4_untargeted", "untargeted")
+    # show_exp(data, "exp5", "./image/fix sigma/exp5_untargeted", "untargeted")

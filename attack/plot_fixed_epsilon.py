@@ -99,6 +99,29 @@ exp1_untargeted = {
         "0.25": [100, 100, 100, 100, 100, 100]
     }
 }
+
+exp5_targeted = {
+    "queries": [100, 200, 300, 400, 500, 1000],
+    "data": {
+        "0.0": [24.2, 37.5, 45.3, 53.9, 56.2, 73.4],
+        "0.003": [27.3, 43.8, 50, 57.8, 61.7, 78.9],
+        "0.009": [24.2, 41.4, 47.7, 53.1, 57.8, 70.3],
+        "0.03": [26.6, 33.6, 39.1, 43, 48.4, 58.6],
+        "0.09": [35.9, 44.5, 47.7, 49.2, 51.6, 55.5]
+    }
+}
+
+exp5_untargeted = {
+    "queries": [100, 200, 300, 400, 500, 1000],
+    "data": {
+        "0.0": [99.2, 100, 100, 100, 100, 100],
+        "0.003": [100, 100, 100, 100, 100, 100],
+        "0.009": [100, 100, 100, 100, 100, 100],
+        "0.03": [100, 100, 100, 100, 100, 100],
+        "0.09": [100, 100, 100, 100, 100, 100]
+    }
+}
+
 dev_name = ["exp1", "exp2", "exp3"]
 
 
@@ -158,4 +181,6 @@ if __name__ == "__main__":
     # show_dev_sccessful_rate(targeted, acc, "./image/targeted.png")
     # show_dev_sccessful_rate(untargeted, acc, "./image/untargeted.png")
     # show_exp1(exp1_targeted, "./image/exp1_targeted.png")
-    show_exp1(exp1_untargeted, "./image/exp1_untargeted.png")
+    # show_exp1(exp1_untargeted, "./image/exp1_untargeted.png")
+    show_exp1(exp5_targeted, "./image/exp5_targeted.png")
+    show_exp1(exp5_untargeted, "./image/exp5_untargeted.png")

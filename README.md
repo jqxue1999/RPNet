@@ -165,8 +165,8 @@ Run code `tensorboard --logidr="./attack/logs"` to see the influence of adding g
 
 ![gaussian influence.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/logs/gaussian%20image.png?raw=true)
 
-We can see that when sigma is greater than 0.19, the image quality is seriously degraded, so the Gaussian noise I
-add in training is less than 0.19.
+We can see that when sigma is greater than 0.19, the image quality is seriously degraded, so the Gaussian noise I add in
+training is less than 0.19.
 
 The attack results are showed below.
 
@@ -184,8 +184,6 @@ defense effect is achieved, and the acc drop is not obvious. But why does this m
 even if I don't add any noise and sigma=0, it still performs well. My guess is that the act of adding Gaussian noise
 simulates different attack behaviors of the attacker, so the model learns how to resist during training. Therefore, in
 the actual reasoning process, I don't need to add any noise at all, and it can still resist attacks.
-
-Of course this is just my conjecture, we will discuss it in detail on Tuesday.
 
 ### More Analysis
 
@@ -222,9 +220,20 @@ epsilon.
 - untargeted attack
   ![exp4_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp4_untargeted.png?raw=true)
 
+#### exp5: attack training
+
+- targeted attack
+  ![exp5_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp5_targeted.png?raw=true)
+
+- untargeted attack
+  ![exp5_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/exp5_untargeted.png?raw=true)
+
 #### all data
 
 - targeted attack
   ![all_targeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/all_targeted.png?raw=true)
 - untargeted attack
   ![all_untargeted.png](https://github.com/quliikay/Adversarial-Attack/blob/main/attack/image/fix%20sigma/all_untargeted.png?raw=true)
+
+## Skin Cancer Dataset
+

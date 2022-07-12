@@ -34,6 +34,8 @@ MNIST_STD = [0.3081]
 MNIST_TRANSFORM = trans.Compose([
     trans.ToTensor()])
 
+DEFAULT_TRANSFORM = trans.ToTensor()
+
 
 # add gaussian noise
 def add_gaussian_noise(img, sigma=0):
@@ -104,7 +106,8 @@ def get_preds(model, inputs, dataset_name, correct_class=None, batch_size=25, re
             if correct_class is None:
                 prob, pred = output.max(1)
             else:
-                prob, pred = output[:, correct_class], torch.autograd.Variable(torch.ones(output.size()) * correct_class)
+                prob, pred = output[:, correct_class], torch.autograd.Variable(
+                    torch.ones(output.size()) * correct_class)
             if return_cpu:
                 prob = prob.data.cpu()
                 pred = pred.data.cpu()
@@ -159,7 +162,7 @@ def diagonal_order(image_size, channels):
     for i in range(image_size):
         order[i, :(image_size - i)] = i + x[i:]
     for i in range(1, image_size):
-        reverse = order[image_size - i - 1].index_select(0, torch.LongTensor([i for i in range(i-1, -1, -1)]))
+        reverse = order[image_size - i - 1].index_select(0, torch.LongTensor([i for i in range(i - 1, -1, -1)]))
         order[i, (image_size - i):] = image_size * image_size - 1 - reverse
     if channels > 1:
         order_2d = order
@@ -185,8 +188,8 @@ def block_order(image_size, channels, initial_size=1, stride=1):
         num_elems = channels * (2 * stride * i + stride * stride)
         perm = torch.randperm(num_elems) + total_elems
         num_first = channels * stride * (stride + i)
-        order[:, :(i+stride), i:(i+stride)] = perm[:num_first].view(channels, -1, stride)
-        order[:, i:(i+stride), :i] = perm[num_first:].view(channels, stride, -1)
+        order[:, :(i + stride), i:(i + stride)] = perm[:num_first].view(channels, -1, stride)
+        order[:, i:(i + stride), :i] = perm[num_first:].view(channels, stride, -1)
         total_elems += num_elems
     return order.view(1, -1).squeeze().long().sort()[1]
 
@@ -199,7 +202,14 @@ def block_zero(x, block_size=8, ratio=0.5):
     mask[:, :, :int(block_size * ratio), :int(block_size * ratio)] = 1
     for i in range(num_blocks):
         for j in range(num_blocks):
-            z[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)] = x[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)] * mask
+            z[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)] = x[:, :, (
+                                                                                                                            i * block_size):(
+                                                                                                                            (
+                                                                                                                                        i + 1) * block_size),
+                                                                                                        (
+                                                                                                                    j * block_size):(
+                                                                                                                    (
+                                                                                                                                j + 1) * block_size)] * mask
     return z
 
 
@@ -235,7 +245,9 @@ def block_idct(x, block_size=8, masked=False, ratio=0.5, linf_bound=0.0):
             submat = x[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)].numpy()
             if masked:
                 submat = submat * mask
-            z[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)] = torch.from_numpy(idct(idct(submat, axis=3, norm='ortho'), axis=2, norm='ortho'))
+            z[:, :, (i * block_size):((i + 1) * block_size),
+            (j * block_size):((j + 1) * block_size)] = torch.from_numpy(
+                idct(idct(submat, axis=3, norm='ortho'), axis=2, norm='ortho'))
     if linf_bound > 0:
         return z.clamp(-linf_bound, linf_bound)
     else:
@@ -252,3 +264,51 @@ def setup_seed(seed):
     np.random.seed(seed)
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+
+
+def get_dataset(dataset_name, dataset_dir, batch_size=64):
+    if dataset_name == "CIFAR10":
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
+        test_data = torchvision.datasets.CIFAR10(root=dataset_dir, train=False, download=True, transform=transform_test)
+        test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
+    elif dataset_name == "MNIST":
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        test_data = torchvision.datasets.MNIST(root=dataset_dir, train=False, download=True, transform=transform_test)
+        test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
+    elif dataset_name == "SkinCancer":
+        transforms_test = transforms.ToTensor()
+
+        class TestData(torch.utils.data.Dataset):
+            def __init__(self, df_dir, transform=None):
+                super().__init__()
+                self.data_array = pd.read_csv(df_dir).to_numpy()
+                self.transform = transform
+
+            def __len__(self):
+                return self.data_array.shape[0]
+
+            def __getitem__(self, index):
+                # Load data and get label
+                X = Image.fromarray(np.uint8(self.data_array[index, :-1].reshape(28, 28, 3)))
+                y = torch.tensor(int(self.data_array[index, -1]))
+
+                if self.transform:
+                    X = self.transform(X)
+
+                return X, y
+
+        test_data = TestData(os.path.join(dataset_dir, 'SkinCancer', 'test.csv'), transforms_test)
+        test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
+    else:
+        test_dataloader = None
+
+    return test_dataloader
