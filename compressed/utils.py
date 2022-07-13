@@ -60,7 +60,7 @@ def get_dataset(dataset_name, dataset_dir, batch_size=64):
         test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     elif dataset_name == "DiabeticRetinopathy":
-        transforms_test = transforms.ToTensor()
+        transforms_test = transforms.Compose([transforms.ToTensor(), transforms.RandomCrop(32)])
 
         class TestData(torch.utils.data.Dataset):
             def __init__(self, base_dir, transform=None):
