@@ -34,7 +34,8 @@ MNIST_STD = [0.3081]
 MNIST_TRANSFORM = trans.Compose([
     trans.ToTensor()])
 
-DEFAULT_TRANSFORM = trans.ToTensor()
+SkinCancer_TRANSFORM = trans.ToTensor()
+DiabeticRetinopathy_TRANSFORM = transforms_test = trans.Compose([trans.ToTensor(), trans.RandomCrop(32)])
 
 
 # add gaussian noise

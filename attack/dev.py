@@ -13,12 +13,12 @@ import pandas as pd
 from PIL import Image
 
 base_params = {
-    "data_root": "../data",
-    "dataset": "SkinCancer",
-    "model_type": "SkinCancer",
-    "freq_dims": 28,
-    "image_size": 28,
-    "stride": 7,
+    "data_root": "../data/DiabeticRetinopathy",
+    "dataset": "DiabeticRetinopathy",
+    "model_type": "DiabeticRetinopathy",
+    "freq_dims": 32,
+    "image_size": 32,
+    "stride": 8,
     "linf_bound": 0.0,
     "order": "rand",
     "num_iters": 0,
@@ -27,8 +27,8 @@ base_params = {
     "seed": 47,
     "num_runs": 1000,
     "batch_size": 128,
-    "sigma": 0.0,
-    "sigma2": 0.0,
+    "sigma": 0.009,
+    "sigma2": 0.009,
     "epsilon": 1.0
 }
 
@@ -53,6 +53,26 @@ class SkinCancerData(torch.utils.data.Dataset):
         return X, y
 
 
+class DiabeticRetinopathyData(torch.utils.data.Dataset):
+    def __init__(self, base_dir, transform=None):
+        self.base_dir = os.path.join(base_dir, 'images')
+        self.df = pd.read_csv(os.path.join(base_dir, 'test.csv'))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, index):
+        # Load data and get label
+        X = Image.open(os.path.join(self.base_dir, self.df['id_code'][index] + ".png"))
+        y = torch.tensor(int(self.df['diagnosis'][index]))
+
+        if self.transform:
+            X = self.transform(X)
+
+        return X, y
+
+
 def defense(params):
     # load model and dataset
     if params["compress"]:
@@ -67,9 +87,11 @@ def defense(params):
         model = models.GaussianNoiseNet(model, params["sigma2"])
     model.eval()
     if params["dataset"] == "SkinCancer":
-        testset = SkinCancerData(os.path.join(params["data_root"], 'SkinCancer', 'test.csv'), utils.DEFAULT_TRANSFORM)
-    if params["dataset"] == "cifar":
+        testset = SkinCancerData(os.path.join(params["data_root"], 'SkinCancer', 'test.csv'), utils.SkinCancer_TRANSFORM)
+    elif params["dataset"] == "cifar":
         testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
+    elif params["dataset"] == "DiabeticRetinopathy":
+        testset = DiabeticRetinopathyData(params["data_root"], utils.DiabeticRetinopathy_TRANSFORM)
     attacker = SimBA(model, params["dataset"], params["image_size"], params["sigma"])
 
     images = torch.zeros(params["num_runs"], 3, params["image_size"], params["image_size"])
@@ -128,7 +150,7 @@ if __name__ == "__main__":
             "targeted": True,
             "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/SkinCancer/sigmas/eBaseNet-16.pth",
+            "model_ckpt": "../checkpoint/DiabeticRetinopathy/sigmas/eBaseNet-16.pth",
             "model": "eBaseNet"
         },
         # {
@@ -142,7 +164,7 @@ if __name__ == "__main__":
             "targeted": False,
             "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/SkinCancer/sigmas/eBaseNet-16.pth",
+            "model_ckpt": "../checkpoint/DiabeticRetinopathy/sigmas/eBaseNet-16.pth",
             "model": "eBaseNet"
         }
     ]
