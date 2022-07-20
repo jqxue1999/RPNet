@@ -13,12 +13,8 @@ import pandas as pd
 from PIL import Image
 
 base_params = {
-    "data_root": "../data/DiabeticRetinopathy",
-    "dataset": "DiabeticRetinopathy",
-    "model_type": "DiabeticRetinopathy",
-    "freq_dims": 32,
-    "image_size": 32,
-    "stride": 8,
+    "model": "eBaseNet",
+    "compress": True,
     "linf_bound": 0.0,
     "order": "rand",
     "num_iters": 0,
@@ -26,10 +22,7 @@ base_params = {
     "log_every": 10,
     "seed": 47,
     "num_runs": 1000,
-    "batch_size": 128,
-    "sigma": 0.009,
-    "sigma2": 0.009,
-    "epsilon": 1.0
+    "batch_size": 128
 }
 
 
@@ -87,7 +80,8 @@ def defense(params):
         model = models.GaussianNoiseNet(model, params["sigma2"])
     model.eval()
     if params["dataset"] == "SkinCancer":
-        testset = SkinCancerData(os.path.join(params["data_root"], 'SkinCancer', 'test.csv'), utils.SkinCancer_TRANSFORM)
+        testset = SkinCancerData(os.path.join(params["data_root"], 'SkinCancer', 'test.csv'),
+                                 utils.SkinCancer_TRANSFORM)
     elif params["dataset"] == "cifar":
         testset = dset.CIFAR10(root=params["data_root"], train=False, download=True, transform=utils.CIFAR_TRANSFORM)
     elif params["dataset"] == "DiabeticRetinopathy":
@@ -134,41 +128,42 @@ def defense(params):
 
 
 if __name__ == "__main__":
-    if not os.path.exists('./results/targeted'):
-        os.mkdir('./results/targeted')
-    if not os.path.exists('./results/untargeted'):
-        os.mkdir('./results/untargeted')
+    if not os.path.exists('./results'):
+        os.mkdir('./results')
+
     dev_params = [
-        # {
-        #     "targeted": True,
-        #     "compress": False,
-        #     "output_noise": False,
-        #     "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
-        #     "model": "BaseNet"
-        # },
         {
+            "data_root": "../data",
+            "dataset": "SkinCancer",
+            "model_type": "SkinCancer",
+            "freq_dims": 28,
+            "image_size": 28,
+            "stride": 7,
+            "version": "sigma_single_output=0.06",
             "targeted": True,
-            "compress": True,
             "output_noise": False,
-            "model_ckpt": "../checkpoint/DiabeticRetinopathy/sigmas/eBaseNet-16.pth",
-            "model": "eBaseNet"
+            "model_ckpt": "../checkpoint/SkinCancer/sigma_single/eBaseNet-16.pth",
+            "sigma": 0.05,
+            "sigma2": 0.06,
+            "epsilon": 1.0
         },
-        # {
-        #     "targeted": False,
-        #     "compress": False,
-        #     "output_noise": False,
-        #     "model_ckpt": "../checkpoint/CIFAR10/BaseNet.pth",
-        #     "model": "BaseNet"
-        # },
         {
+            "data_root": "../data",
+            "dataset": "SkinCancer",
+            "model_type": "SkinCancer",
+            "freq_dims": 28,
+            "image_size": 28,
+            "stride": 7,
+            "version": "sigma_single_output=0.06",
             "targeted": False,
-            "compress": True,
-            "output_noise": False,
-            "model_ckpt": "../checkpoint/DiabeticRetinopathy/sigmas/eBaseNet-16.pth",
-            "model": "eBaseNet"
+            "output_noise": True,
+            "model_ckpt": "../checkpoint/SkinCancer/sigma_single/eBaseNet-16.pth",
+            "sigma": 0.05,
+            "sigma2": 0.06,
+            "epsilon": 1.0
         }
     ]
-    # sigmas = [0, 0.003, 0.009, 0.03, 0.09]
+    # sigmas = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
     # for params in dev_params:
     #     df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas)
     #     for sigma in sigmas:
@@ -176,8 +171,24 @@ if __name__ == "__main__":
     #         params.update(base_params)
     #         a = defense(params)
     #         df.loc[sigma] = list(a.values())
-    #     df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
-    #     print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))
+    #     df.to_csv("./results/{}/epsilon/epsilon={}_{}_{}.csv".format(params["model_type"], params["epsilon"],
+    #         params["version"], "targeted" if params["targeted"] else "untargeted"))
+    #     print("./results/{}/epsilon/epsilon={}_{}_{}.csv".format(params["model_type"], params["epsilon"],
+    #         params["version"], "targeted" if params["targeted"] else "untargeted"))
+
+    # sigmas2 = [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]
+    # for params in dev_params:
+    #     df = pd.DataFrame({100: None, 200: None, 300: None, 400: None, 500: None, 1000: None}, index=sigmas2)
+    #     for sigma2 in sigmas2:
+    #         base_params["sigma2"] = sigma2
+    #         params.update(base_params)
+    #         a = defense(params)
+    #         df.loc[sigma2] = list(a.values())
+    #     save_dir = "./results/{}/epsilon/epsilon={}_{}_{}_output.csv".format(params["model_type"], params["epsilon"],
+    #                                                                          params["version"], "targeted" if params[
+    #                                                                          "targeted"] else "untargeted")
+    #     df.to_csv(save_dir)
+    #     print(save_dir)
 
     epsilons = [0.5, 0.8, 1.0, 1.3, 1.5, 1.8, 2.0]
     for params in dev_params:
@@ -187,5 +198,5 @@ if __name__ == "__main__":
             params.update(base_params)
             a = defense(params)
             df.loc[epsilon] = list(a.values())
-        df.to_csv("./results/{}/{}.csv".format("targeted" if params["targeted"] else "untargeted", params["model"]))
-        print("{}, {} saved".format("targeted" if params["targeted"] else "untargeted", params["model"]))
+        df.to_csv("./results/{}/sigma/sigma={}_{}_{}.csv".format(params["model_type"], params["sigma"], params["version"], "targeted" if params["targeted"] else "untargeted"))
+        print("./results/{}/sigma/sigma={}_{}_{}.csv".format(params["model_type"], params["sigma"], params["version"], "targeted" if params["targeted"] else "untargeted"))

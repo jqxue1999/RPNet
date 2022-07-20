@@ -113,14 +113,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_name', type=str)
     parser.add_argument('--data_dir', type=str)
-    parser.add_argument('--model_name', type=str)
     parser.add_argument('--model_dir', type=str)
+    parser.add_argument('--save_dir', type=str)
 
     args = parser.parse_args()
 
     model = torch.load(args.model_dir)
-    sigma = 0.009
-    for sigma2 in [0.0, 0.003, 0.009, 0.03, 0.09]:
+    sigma = 0.05
+    acc_sigma = {"sigma2": [], "acc": []}
+    for sigma2 in [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]:
         testset = get_dataset(args.data_name, args.data_dir, 128, sigma)
-        print("sigma = {}".format(sigma2))
-        test(model, testset, sigma2)
+        print("sigma2 = {}".format(sigma2))
+        acc_sigma["sigma2"].append(sigma2)
+        acc_sigma["acc"].append(round(test(model, testset, sigma2)[0] * 100, 2))
+    df = pd.DataFrame(acc_sigma)
+    df.to_csv(args.save_dir)

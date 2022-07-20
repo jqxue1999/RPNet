@@ -1,10 +1,12 @@
 import torch
+import pandas as pd
 import numpy as np
 import torchvision.transforms as trans
+import torchvision
 import math
 from scipy.fftpack import dct, idct
 import random
-import matplotlib.pyplot as plt
+from PIL import Image
 import os
 
 # mean and std for different datasets
@@ -203,14 +205,7 @@ def block_zero(x, block_size=8, ratio=0.5):
     mask[:, :, :int(block_size * ratio), :int(block_size * ratio)] = 1
     for i in range(num_blocks):
         for j in range(num_blocks):
-            z[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)] = x[:, :, (
-                                                                                                                            i * block_size):(
-                                                                                                                            (
-                                                                                                                                        i + 1) * block_size),
-                                                                                                        (
-                                                                                                                    j * block_size):(
-                                                                                                                    (
-                                                                                                                                j + 1) * block_size)] * mask
+            z[:, :, (i * block_size):((i + 1) * block_size), (j * block_size):((j + 1) * block_size)] = x[:, :, (i * block_size):((i + 1) * block_size),(j * block_size):((j + 1) * block_size)] * mask
     return z
 
 
@@ -269,23 +264,23 @@ def setup_seed(seed):
 
 def get_dataset(dataset_name, dataset_dir, batch_size=64):
     if dataset_name == "CIFAR10":
-        transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        transform_test = trans.Compose([
+            trans.ToTensor(),
+            trans.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         ])
         test_data = torchvision.datasets.CIFAR10(root=dataset_dir, train=False, download=True, transform=transform_test)
         test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     elif dataset_name == "MNIST":
-        transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
+        transform_test = trans.Compose([
+            trans.ToTensor(),
+            trans.Normalize((0.1307,), (0.3081,))
         ])
         test_data = torchvision.datasets.MNIST(root=dataset_dir, train=False, download=True, transform=transform_test)
         test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
     elif dataset_name == "SkinCancer":
-        transforms_test = transforms.ToTensor()
+        transforms_test = trans.ToTensor()
 
         class TestData(torch.utils.data.Dataset):
             def __init__(self, df_dir, transform=None):

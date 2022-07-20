@@ -1,5 +1,7 @@
 import sys
 import os
+import pandas as pd
+from PIL import Image
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 import torchvision.datasets as dset
@@ -10,6 +12,25 @@ import argparse
 import models
 from simba_cifar import SimBA
 from tqdm import tqdm
+
+class DiabeticRetinopathyData(torch.utils.data.Dataset):
+    def __init__(self, base_dir, transform=None):
+        self.base_dir = os.path.join(base_dir, 'images')
+        self.df = pd.read_csv(os.path.join(base_dir, 'train.csv'))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, index):
+        # Load data and get label
+        X = Image.open(os.path.join(self.base_dir, self.df['id_code'][index] + ".png"))
+        y = torch.tensor(int(self.df['diagnosis'][index]))
+
+        if self.transform:
+            X = self.transform(X)
+
+        return X, y
 
 parser = argparse.ArgumentParser(description='Runs SimBA on a set of images')
 parser.add_argument('--data_root', type=str, default='./data', help='root directory of imagenet data')
@@ -43,7 +64,7 @@ if not os.path.exists(args.sampled_image_dir):
 if args.compress:
     model = torch.load(args.model_ckpt)
 else:
-    model = getattr(getattr(models, "CIFAR10"), args.model)().cuda()
+    model = getattr(getattr(models, "DiabeticRetinopathy"), args.model)().cuda()
     model = torch.nn.DataParallel(model)
     checkpoint = torch.load(args.model_ckpt)
     model.load_state_dict(checkpoint['net'])
@@ -51,8 +72,8 @@ else:
 utils.setup_seed(args.seed)
 model.eval()
 image_size = 32
-testset = dset.CIFAR10(root=args.data_root, train=True, download=True, transform=utils.CIFAR_TRANSFORM)
-attacker = SimBA(model, 'cifar', image_size, args.sigma)
+testset = DiabeticRetinopathyData(args.data_root, utils.DiabeticRetinopathy_TRANSFORM)
+attacker = SimBA(model, 'DiabeticRetinopathy', image_size, args.sigma)
 
 # load sampled images or sample new ones
 # this is to ensure all attacks are run on the same set of correctly classified images
@@ -69,7 +90,7 @@ else:
         idx = torch.arange(0, images.size(0)).long()[preds.ne(labels)]
         for i in list(idx):
             images[i], labels[i] = testset[random.randint(0, len(testset) - 1)]
-        preds[idx], _ = utils.get_preds(model, images[idx], 'cifar', batch_size=args.batch_size, sigma=args.sigma)
+        preds[idx], _ = utils.get_preds(model, images[idx], 'DiabeticRetinopathy', batch_size=args.batch_size, sigma=args.sigma)
     torch.save({'images': images, 'labels': labels}, batchfile)
 
 if args.order == 'rand':
@@ -122,7 +143,7 @@ for i in tqdm(range(N)):
         args.save_suffix)
     torch.save({'adv': all_adv, 'probs': all_probs, 'succs': all_succs, 'queries': all_queries,
                 'l2_norms': all_l2_norms, 'linf_norms': all_linf_norms}, savefile)
-torch.save(all_attack_images, "./attack_images/test3.pth")
+torch.save(all_attack_images, "./attack_images/DiabeticRetinopathy/train.pth")
 
 # import matplotlib.pyplot as plt
 # import numpy as np

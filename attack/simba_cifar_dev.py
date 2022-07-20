@@ -58,6 +58,8 @@ class SimBA:
     # (for targeted attack) <labels_batch>
     def simba_batch(self, images_batch, labels_batch, max_iters, freq_dims, stride, epsilon, linf_bound=0.0,
                     order='rand', targeted=False, pixel_attack=False, log_every=1, seed=47):
+        best_rate = 0
+        best_queries = 0
         res = {100: -1, 200: -1, 300: -1, 400: -1, 500: -1, 1000: -1}
         utils.setup_seed(seed)
         batch_size = images_batch.size(0)
@@ -161,6 +163,13 @@ class SimBA:
             prev_probs = probs[:, k]
             rate = round(float(1 - remaining.float().mean()) * 100, 1)
             queries_num = queries.sum(1).mean()
+            if rate > best_rate:
+                best_queries = 0
+                best_rate = rate
+            elif best_queries >= 50:
+                epsilon *= 1.1
+            else:
+                best_queries += 1
             if queries_num >= 1000 and res[1000] == -1:
                 res[1000] = rate
                 print("queries={}, rate={:.4f}".format(queries_num, rate))
