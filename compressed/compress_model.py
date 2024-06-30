@@ -27,12 +27,12 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 utils.ensure_dir(args.model_dir)
 model_raw = getattr(getattr(models, args.dataset), args.model)().to(device)
 
-checkpoint = torch.load(args.model_dir)
-model_raw.load_state_dict(checkpoint['net'])
-
 if device == 'cuda':
     model_raw = torch.nn.DataParallel(model_raw)
     cudnn.benchmark = True
+
+checkpoint = torch.load(args.model_dir)
+model_raw.load_state_dict(checkpoint['net'])
 
 # load dataset
 test_dataloader = get_dataset(args.dataset, args.dataset_dir, args.batch_size)

@@ -56,7 +56,16 @@ def add_gaussian_noise(img, sigma):
 
 
 def get_dataset(data_name, data_dir, batch_size=64, sigma=0):
-    if data_name == "CIFAR10":
+    if data_name == "MNIST":
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Lambda(lambda img: add_gaussian_noise(img, sigma)),
+            transforms.Normalize((0.1307, ), (0.3081,))
+        ])
+        test_data = torchvision.datasets.MNIST(root=data_dir, train=False, download=True, transform=transform_test)
+        test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False)
+
+    elif data_name == "CIFAR10":
         transform_test = transforms.Compose([
             transforms.ToTensor(),
             transforms.Lambda(lambda img: add_gaussian_noise(img, sigma)),
@@ -88,28 +97,30 @@ def get_dataset(data_name, data_dir, batch_size=64, sigma=0):
 
 
 def test(model, dataloader, sigma2=0):
-    if sigma2 != 0:
-        model = GaussianNoiseNet(model, sigma2)
+    model = GaussianNoiseNet(model, sigma2)
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
     test_loss, correct = 0, 0
     model = model.cuda()
     model.eval()
     loss_fn = torch.nn.CrossEntropyLoss()
+    ret = torch.tensor([]).cuda()
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.cuda(), y.cuda()
             pred = model(X)
+            a = pred.topk(dim=1, k=2)[0]
+            b = a[:, 0] - a[:, 1]
+            ret = torch.cat((ret, b), 0)
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size
     print("Acc: {0}, Loss: {1}".format(correct, test_loss))
-    return correct, test_loss
+    return correct, test_loss, ret
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_name', type=str)
     parser.add_argument('--data_dir', type=str)
@@ -119,12 +130,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = torch.load(args.model_dir)
-    sigma = 0.05
-    acc_sigma = {"sigma2": [], "acc": []}
-    for sigma2 in [0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09]:
+    sigma2 = 0
+    acc_sigma = {"sigma": [], "acc": []}
+    for sigma in [0]:
         testset = get_dataset(args.data_name, args.data_dir, 128, sigma)
-        print("sigma2 = {}".format(sigma2))
-        acc_sigma["sigma2"].append(sigma2)
+        print("sigma = {}".format(sigma))
+        acc_sigma["sigma"].append(sigma)
         acc_sigma["acc"].append(round(test(model, testset, sigma2)[0] * 100, 2))
     df = pd.DataFrame(acc_sigma)
     df.to_csv(args.save_dir)
+
+    # sigma = 0
+    # acc_sigma = {"sigma2": [], "acc": []}
+    # for sigma2 in np.arange(0, 0.3, 0.05):
+    #     testset = get_dataset(args.data_name, args.data_dir, 128, sigma)
+    #     print("sigma = {}".format(sigma2))
+    #     acc_sigma["sigma2"].append(sigma2)
+    #     acc_sigma["acc"].append(round(test(model, testset, sigma2)[0] * 100, 2))
+    # df = pd.DataFrame(acc_sigma)
+    # df.to_csv(args.save_dir)

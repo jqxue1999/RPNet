@@ -16,7 +16,7 @@ class eBaseNet(nn.Module):
         )
         self.classifier = nn.Sequential(
             nn.Linear(1024, 128), Square(), nn.Dropout(),
-            nn.Linear(128, 10)
+            nn.Linear(128, 7)
         )
 
     def forward(self, x):

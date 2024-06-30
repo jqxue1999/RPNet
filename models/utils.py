@@ -36,6 +36,7 @@ def get_dataset(dataset_name, dataset_dir, batch_size=64, sigmas=[0], is_single=
         transform_train = transforms.Compose([
             transforms.RandomCrop(28, padding=4),
             transforms.ToTensor(),
+            transforms.Lambda(lambda img: add_gaussian_noise(img, sigmas, is_single)),
             transforms.Normalize((0.1307, ), (0.3081,))
         ])
         transform_test = transforms.Compose([

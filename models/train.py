@@ -23,8 +23,8 @@ setup_seed(47)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 best_acc = 0
 # gaussian_noise = [0, 0.003, 0.009, 0.03, 0.09, 0.13, 0.19]
-gaussian_noise = [0.19]
-train_dataloader, test_dataloader = get_dataset(args.dataset, args.dataset_dir, args.batch_size, gaussian_noise, True)
+gaussian_noise = [0, 0.003, 0.009, 0.03, 0.09, 0.13, 0.19]
+train_dataloader, test_dataloader = get_dataset(args.dataset, args.dataset_dir, args.batch_size, gaussian_noise, False)
 
 model = getattr(getattr(models, args.dataset), args.model)().to(device)
 if device == 'cuda':

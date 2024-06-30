@@ -40,6 +40,46 @@ SkinCancer_TRANSFORM = trans.ToTensor()
 DiabeticRetinopathy_TRANSFORM = transforms_test = trans.Compose([trans.ToTensor(), trans.RandomCrop(32)])
 
 
+class SkinCancerData(torch.utils.data.Dataset):
+    def __init__(self, df_dir, transform=None):
+        super().__init__()
+        self.data_array = pd.read_csv(df_dir).to_numpy()
+        self.transform = transform
+
+    def __len__(self):
+        return self.data_array.shape[0]
+
+    def __getitem__(self, index):
+        # Load data and get label
+        X = Image.fromarray(np.uint8(self.data_array[index, :-1].reshape(28, 28, 3)))
+        y = torch.tensor(int(self.data_array[index, -1]))
+
+        if self.transform:
+            X = self.transform(X)
+
+        return X, y
+
+
+class DiabeticRetinopathyData(torch.utils.data.Dataset):
+    def __init__(self, base_dir, transform=None):
+        self.base_dir = os.path.join(base_dir, 'images')
+        self.df = pd.read_csv(os.path.join(base_dir, 'test.csv'))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, index):
+        # Load data and get label
+        X = Image.open(os.path.join(self.base_dir, self.df['id_code'][index] + ".png"))
+        y = torch.tensor(int(self.df['diagnosis'][index]))
+
+        if self.transform:
+            X = self.transform(X)
+
+        return X, y
+
+
 # add gaussian noise
 def add_gaussian_noise(img, sigma=0):
     noise_img = img + sigma * torch.randn_like(img)
@@ -68,7 +108,7 @@ def invert_normalization(imgs, dataset):
 
 
 # applies the normalization transformations
-def apply_normalization(imgs, dataset, sigma):
+def apply_normalization(imgs, dataset, sigma=0):
     if dataset == 'imagenet':
         mean = IMAGENET_MEAN
         std = IMAGENET_STD
@@ -83,6 +123,7 @@ def apply_normalization(imgs, dataset, sigma):
         std = [1, 1, 1]
     imgs_tensor = imgs.clone()
     if dataset == 'mnist':
+        imgs_tensor = add_gaussian_noise(imgs_tensor, sigma)
         imgs_tensor = (imgs_tensor - mean[0]) / std[0]
     else:
         imgs_tensor = add_gaussian_noise(imgs_tensor, sigma)
@@ -159,14 +200,32 @@ def get_least_likely(model, inputs, dataset_name, batch_size=25, return_cpu=True
 # [1, 2, 5]
 # [3, 4, 8]
 # [6, 7, 9]
+# def diagonal_order(image_size, channels):
+#     x = torch.arange(0, image_size).cumsum(0)
+#     order = torch.zeros(image_size, image_size)
+#     for i in range(image_size):
+#         order[i, :(image_size - i)] = i + x[i:]
+#     for i in range(1, image_size):
+#         reverse = order[image_size - i - 1].index_select(0, torch.LongTensor([i for i in range(i - 1, -1, -1)]))
+#         order[i, (image_size - i):] = image_size * image_size - 1 - reverse
+#     if channels > 1:
+#         order_2d = order
+#         order = torch.zeros(channels, image_size, image_size)
+#         for i in range(channels):
+#             order[i, :, :] = 3 * order_2d + i
+#     return order.view(1, -1).squeeze().long().sort()[1]
+
 def diagonal_order(image_size, channels):
-    x = torch.arange(0, image_size).cumsum(0)
-    order = torch.zeros(image_size, image_size)
+    order = torch.zeros((image_size, image_size))
+    dic = {}
     for i in range(image_size):
-        order[i, :(image_size - i)] = i + x[i:]
-    for i in range(1, image_size):
-        reverse = order[image_size - i - 1].index_select(0, torch.LongTensor([i for i in range(i - 1, -1, -1)]))
-        order[i, (image_size - i):] = image_size * image_size - 1 - reverse
+        for j in range(image_size):
+            dic[(i, j)] = (i**2 + j**2) + 0.01 * (i+j)
+
+    x = dict(sorted(dic.items(), key=lambda item: item[1]))
+    for idx, (i, j) in enumerate(x.keys()):
+        order[i, j] = int(idx)
+
     if channels > 1:
         order_2d = order
         order = torch.zeros(channels, image_size, image_size)
@@ -308,3 +367,15 @@ def get_dataset(dataset_name, dataset_dir, batch_size=64):
         test_dataloader = None
 
     return test_dataloader
+
+
+def get_target_labels(true_labels, label_set):
+    target_labels = true_labels.clone()
+    for i in range(target_labels.size(0)):
+        while target_labels[i] == true_labels[i]:
+            target_labels[i] = torch.tensor(random.choice(label_set))
+    return target_labels
+
+if __name__=="__main__":
+    a = diagonal_order(10, 1)
+    b = block_order(10, 1, initial_size=2, stride=2)

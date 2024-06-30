@@ -154,6 +154,26 @@ class CompressedModel(nn.Module):
 
     def forward(self, x):
         x = self.features(self.input_scale*x)
+        """
+        x = self.features[0](self.input_scale*x)
+        x = self.features[1](x)
+        x = self.features[2](x)
+        x = self.features[3](x)
+        x = self.features[4](x)
+        x = self.features[5](x)
+        # x = x + torch.randn_like(x) * 0.025 # 1
+        x = self.features[6](x)
+        x = self.features[7](x)
+        x = self.features[8](x)
+        x = self.features[9](x)
+        x = self.features[10](x)
+        x = self.features[11](x)
+        # x = x + torch.randn_like(x) * 0.025 # 2
+        x = self.features[12](x)
+        x = self.features[13](x)
+        x = self.features[14](x)
+        x = self.features[15](x)
+        """
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
